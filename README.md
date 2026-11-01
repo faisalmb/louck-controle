@@ -1,235 +1,213 @@
-<div dir="rtl">
+**English** | [العربية](README.ar.md)
 
 # Tuya Lock for Windows
 
-برنامج لفتح أقفال **تويا (Tuya / Smart Life)** الذكية من الكمبيوتر بضغطة زر، عبر **Tuya Cloud API**. صُمّم لويندوز، ويعمل أيضاً على **ماك** و**لينكس**.
-
-*A desktop app (Python + PySide6) for Windows, macOS and Linux that unlocks Tuya smart locks through the Tuya Cloud OpenAPI, protected by Windows Hello / Touch ID and a PIN.*
+Unlock your **Tuya / Smart Life** smart locks from your computer with one click, through the **Tuya Cloud API**. Built for Windows, also runs on **macOS** and **Linux**.
 
 [![build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
 
-## التحميل
+## Download
 
-من صفحة [**Releases**](../../releases/latest):
+From the [**Releases**](../../releases/latest) page:
 
-| النظام | الملف |
+| OS | File |
 |---|---|
-| ويندوز | `LockControl-Setup-x.y.z.exe` (مثبّت)، أو `...-windows-portable.zip` (بدون تثبيت) |
-| ماك (Apple Silicon) | `LockControl-x.y.z-macos.dmg` |
-| لينكس (x86_64) | `LockControl-x.y.z-linux-x86_64.tar.gz` |
+| Windows | `LockControl-Setup-x.y.z.exe` (installer), or `...-windows-portable.zip` (no install) |
+| macOS (Apple Silicon) | `LockControl-x.y.z-macos.dmg` |
+| Linux (x86_64) | `LockControl-x.y.z-linux-x86_64.tar.gz` |
 
-> الملفات غير موقّعة رقمياً. **ويندوز:** عند ظهور تحذير SmartScreen اضغط *More info ← Run anyway*. **ماك:** عند أول تشغيل انقر بزر الفأرة الأيمن على البرنامج ثم *Open*.
+> The builds are not code-signed. **Windows:** if SmartScreen warns you, click *More info → Run anyway*. **macOS:** on first launch, right-click the app and choose *Open*.
 
 <p align="center">
-  <img src="docs/screenshots/main.png" width="300" alt="النافذة الرئيسية">
+  <img src="docs/screenshots/main.png" width="300" alt="Main window">
 </p>
 
-## المزايا
+> The user interface is in **Arabic** (right-to-left).
 
-- **زر فتح كبير** يفتح القفل الافتراضي مباشرة.
-- **عدة أقفال** مع قفل افتراضي ⭐، واختيار أي قفل آخر من القائمة.
-- **حالة القفل**: متصل أو غير متصل، ونسبة البطارية أو حالتها.
-- **مزامنة الأقفال** تلقائياً من حسابات Smart Life المرتبطة بمشروع تويا.
-- **أيقونة في شريط المهام**: نقرة مزدوجة تفتح القفل الافتراضي، وقائمة لفتح أي قفل.
-- **اختصار عام** (افتراضياً `Ctrl+Alt+O`) يفتح القفل حتى والبرنامج مصغّر.
-- **التشغيل مع ويندوز** مصغّراً في شريط المهام.
-- **سجل العمليات**: وقت كل عملية فتح ونتيجتها.
-- **رسائل أخطاء عربية واضحة**: القفل غير متصل، انتهاء اشتراك تويا، ساعة الجهاز غير مضبوطة...
-- **تصدير الإعدادات واستيرادها** بملف مشفّر بكلمة مرور، للنقل إلى جهاز آخر.
-- **واجهة عربية** من اليمين لليسار، وتتبع الوضع الداكن أو الفاتح في ويندوز.
+## Features
 
-## الحماية
+- **Big unlock button** that opens your default lock right away.
+- **Multiple locks** with a default lock ⭐, and any other lock one click away.
+- **Lock status**: online/offline and battery level or state.
+- **Automatic lock sync** from the Smart Life accounts linked to your Tuya project.
+- **Tray icon**: double-click unlocks the default lock; the menu unlocks any lock.
+- **Global hotkey** (default `Ctrl+Alt+O`) that unlocks even while the app is minimized.
+- **Start with the OS**, minimized to the tray.
+- **History log** of every unlock with its result.
+- **Clear error messages**: lock offline, Tuya subscription expired, wrong system clock, and more.
+- **Encrypted export/import** of your settings (password-protected file) to move to another computer.
+- Follows the system **dark / light** theme.
 
-| الطبقة | متى تُطلب |
+## Security
+
+| Layer | When it is asked |
 |---|---|
-| **Windows Hello** (بصمة، وجه، أو PIN ويندوز). إن لم يكن مُعدّاً فكلمة مرور حساب ويندوز | مرة واحدة يومياً عند أول فتح |
-| **PIN البرنامج** (4–8 أرقام) | مع تحقق ويندوز مرة يومياً، أو عند كل فتح للقفل إن فعّلت الخيار |
-| **PIN عند فتح الإعدادات** | دائماً، لأن الإعدادات تحتوي Client Secret |
+| **OS verification**: Windows Hello (fingerprint, face, Windows PIN) or the account password; Touch ID or the device password on macOS | Once a day, on first use |
+| **App PIN** (4–8 digits) | Once a day together with OS verification, or on every unlock if you enable that option |
+| **PIN to open Settings** | Always, since settings hold the Client Secret |
 
-- 3 محاولات PIN خاطئة ← إيقاف مؤقت لمدة دقيقة. 5 محاولات ← يُلغى تحقق اليوم ويلزم Windows Hello من جديد.
-- «نسيت الـ PIN؟» يعيد تعيينه بعد تحقق ويندوز.
-- خيار لإعادة طلب التحقق بعد قفل الجهاز (`Win+L`).
-- الـ PIN يُحفظ كبصمة مشفّرة (scrypt مع salt)، ولا يُحفظ الرقم نفسه أبداً.
+- 3 wrong PINs → 1-minute lockout. 5 wrong PINs → today's verification is revoked and OS verification is required again.
+- "Forgot PIN?" resets it after OS verification.
+- Optional re-verification after locking the computer (`Win+L`, Windows only).
+- The PIN is stored only as a salted scrypt hash, never the digits themselves.
 
-## الفروق بين الأنظمة
+## Platform differences
 
-| الميزة | ويندوز | ماك | لينكس |
+| Feature | Windows | macOS | Linux |
 |---|---|---|---|
-| تحقق النظام اليومي | Windows Hello، أو كلمة مرور الحساب | Touch ID، أو كلمة مرور الجهاز | غير متاح، والـ PIN وحده يحمي البرنامج |
-| حفظ الأسرار | Credential Manager | Keychain | Secret Service (GNOME Keyring / KWallet) |
-| الاختصار العام | ✓ | ✓ بعد منح إذن *Accessibility* من إعدادات الخصوصية | ✓ في جلسات X11، ولا يعمل غالباً في Wayland |
-| إعادة التحقق بعد قفل الجهاز | ✓ | — | — |
-| التشغيل مع النظام | سجل المستخدم (Run) | LaunchAgent | `~/.config/autostart` |
-| أيقونة شريط المهام | ✓ | ✓ (شريط القوائم) | ✓، وعلى GNOME تحتاج إضافة AppIndicator |
+| Daily OS verification | Windows Hello or account password | Touch ID or device password | Not available, the app PIN alone protects the app |
+| Secret storage | Credential Manager | Keychain | Secret Service (GNOME Keyring / KWallet) |
+| Global hotkey | ✓ | ✓ after granting *Accessibility* permission | ✓ on X11, usually not on Wayland |
+| Re-verify after screen lock | ✓ | — | — |
+| Start with the OS | Run registry key | LaunchAgent | `~/.config/autostart` |
+| Tray icon | ✓ | ✓ (menu bar) | ✓, on GNOME requires the AppIndicator extension |
 
-## أين تُحفظ البيانات
+## Where data is stored
 
-| البيانات | المكان |
+| Data | Location |
 |---|---|
-| الإعدادات، الأقفال، القفل الافتراضي، السجل | ويندوز: `%APPDATA%\LockControl\` · ماك: `~/Library/Application Support/LockControl/` · لينكس: `~/.config/lockcontrol/`. ملفات JSON تُكتب كتابة ذرّية مع نسخة احتياطية `.bak` |
-| Client Secret، توكن تويا، بصمة الـ PIN، حالة التحقق اليومي | مخزن أسرار النظام (الخدمة `LockControl`)، محمي بحساب المستخدم |
+| Settings, locks, default lock, history | Windows: `%APPDATA%\LockControl\` · macOS: `~/Library/Application Support/LockControl/` · Linux: `~/.config/lockcontrol/`. JSON files written atomically with a `.bak` backup |
+| Client Secret, Tuya token, PIN hash, daily verification state | The OS secret store (service `LockControl`), protected by your user account |
 
-لا يحتوي هذا المستودع أي مفاتيح أو بيانات حساب.
+This repository contains no keys or account data.
 
-## المتطلبات
+## Requirements
 
-- Windows 10 أو 11، أو macOS 12 فأحدث (Apple Silicon)، أو لينكس x86_64 حديث. على لينكس قد تحتاج الحزمة `libxcb-cursor0`.
-- حساب على [Tuya IoT Platform](https://platform.tuya.com) (الخطة المجانية تكفي).
-- قفل تويا يدعم **الفتح عن بُعد**، مربوط بتطبيق Smart Life أو Tuya Smart.
-- للتطوير: Python 3.12 أو أحدث.
+- Windows 10/11, macOS 12+ (Apple Silicon), or a recent x86_64 Linux. Linux may need the `libxcb-cursor0` package.
+- An account on the [Tuya IoT Platform](https://platform.tuya.com) (the free plan is enough).
+- A Tuya lock that supports **remote unlock**, linked to the Smart Life or Tuya Smart app.
+- For development: Python 3.12+.
 
-## إعداد منصة تويا (مرة واحدة)
+## Tuya Platform setup (one time)
 
-1. أنشئ مشروع **Cloud** على [Tuya IoT Platform](https://platform.tuya.com/cloud)، واختر **مركز البيانات نفسه** الذي يستخدمه حساب التطبيق. للشرق الأوسط غالباً *Central Europe*.
-2. من **Cloud Services** فعّل خدمتي **IoT Core** و **Smart Lock Open Service**.
-3. اربط حساب التطبيق: **Devices ← Link App Account**، وامسح رمز QR من تطبيق Smart Life.
-4. فعّل **الفتح عن بُعد** للقفل من إعداداته في تطبيق Smart Life.
-5. انسخ **Client ID** و **Client Secret** من صفحة المشروع (**Overview**).
+1. Create a **Cloud** project on the [Tuya IoT Platform](https://platform.tuya.com/cloud), choosing the **same data center** as your app account. For the Middle East this is usually *Central Europe*.
+2. Under **Cloud Services**, subscribe to **IoT Core** and **Smart Lock Open Service**.
+3. Link your app account: **Devices → Link App Account**, then scan the QR code with the Smart Life app.
+4. Enable **remote unlock** for the lock in its settings in the Smart Life app.
+5. Copy the **Client ID** and **Client Secret** from the project **Overview** page.
 
-> **تجديد الخطة المجانية:** اشتراك IoT Core التجريبي له مدة محددة. تجد تاريخ انتهائه في **Cloud ← Cloud Services ← My Services**، وتجدده من زر **Extend Trial Period**. إذا انتهى، يعرض البرنامج رسالة توضح ذلك.
+> **Renewing the free plan:** the IoT Core trial has an expiry date. Find it under **Cloud → Cloud Services → My Services** and renew it with **Extend Trial Period**. If it expires, the app tells you.
 
-## التثبيت والاستخدام
+## Install and use
 
-1. ثبّت البرنامج من ملف `LockControl-Setup-x.y.z.exe` (يُبنى كما في قسم «البناء»)، أو شغّله من الكود.
-2. عند أول تشغيل: تحقق بـ Windows Hello، ثم اختر PIN للبرنامج.
-3. **الإعدادات ← الربط بتويا**: اختر مركز البيانات وأدخل Client ID و Client Secret، ثم اضغط **اختبار الاتصال**.
-4. **الإعدادات ← الأقفال**: اضغط **مزامنة من الحساب**، واختر القفل الافتراضي ⭐، ثم **حفظ**.
-5. اضغط **فتح** 🔓
+1. Install `LockControl-Setup-x.y.z.exe` (or the macOS/Linux build), or run from source.
+2. On first launch: verify with Windows Hello / Touch ID, then choose an app PIN.
+3. **Settings → Tuya connection**: pick the data center, enter the Client ID and Client Secret, then click **Test connection**.
+4. **Settings → Locks**: click **Sync from account**, pick the default lock ⭐, then **Save**.
+5. Click **Unlock** 🔓
 
 <p align="center">
-  <img src="docs/screenshots/settings_tuya.png" width="380" alt="الربط بتويا">
-  <img src="docs/screenshots/settings_locks.png" width="380" alt="الأقفال">
+  <img src="docs/screenshots/settings_tuya.png" width="380" alt="Tuya connection">
+  <img src="docs/screenshots/settings_locks.png" width="380" alt="Locks">
 </p>
 <p align="center">
-  <img src="docs/screenshots/settings_general.png" width="380" alt="الإعدادات العامة">
-  <img src="docs/screenshots/pin.png" width="300" alt="إدخال الـ PIN">
+  <img src="docs/screenshots/settings_general.png" width="380" alt="General settings">
+  <img src="docs/screenshots/pin.png" width="300" alt="PIN entry">
 </p>
 
-## التشغيل من الكود
-
-</div>
+## Run from source
 
 ```bash
 python -m venv .venv
-.venv/Scripts/python -m pip install -e ".[dev]"
+.venv/Scripts/python -m pip install -e ".[dev]"     # macOS/Linux: .venv/bin/python
 .venv/Scripts/python -m lockcontrol
 ```
 
-<div dir="rtl">
-
-أداة سطر أوامر لاختبار الاتصال دون واجهة:
-
-</div>
+Command-line tool to test the connection without the UI:
 
 ```bash
 set TUYA_CLIENT_ID=...
 set TUYA_CLIENT_SECRET=...
 set TUYA_REGION=eu
-.venv\Scripts\lockcontrol-cli token     # اختبار الاتصال
-.venv\Scripts\lockcontrol-cli locks     # سرد الأقفال
-.venv\Scripts\lockcontrol-cli regions   # مراكز البيانات
+.venv\Scripts\lockcontrol-cli token     # test the connection
+.venv\Scripts\lockcontrol-cli locks     # list locks
+.venv\Scripts\lockcontrol-cli regions   # list data centers
 ```
 
-<div dir="rtl">
-
-## الاختبارات
-
-</div>
+## Tests
 
 ```bash
 .venv/Scripts/python -m pytest -q
 ```
 
-<div dir="rtl">
+The tests cover request signing, token refresh, atomic storage, the security and PIN logic, the lock service (against mocked Tuya responses), the UI (pytest-qt), the global hotkey and screen-lock events, and export/import.
 
-تغطي الاختبارات: توقيع الطلبات، وتجديد التوكن، والتخزين الذرّي، ومنطق الحماية والـ PIN، وخدمة الأقفال (بردود تويا محاكاة)، والواجهة (pytest-qt)، والاختصار العام وقفل الجلسة، والتصدير والاستيراد.
+## Building
 
-## البناء
-
-كل نظام يُبنى على نفسه، فلا يمكن بناء نسخة ماك من ويندوز.
-
-</div>
+Each OS is built on itself; a macOS build cannot be made on Windows.
 
 ```bash
 python -m pip install -e ".[build]"
-python packaging/build.py                                  # ماك أو لينكس
-powershell -ExecutionPolicy Bypass -File build.ps1         # ويندوز، مع المثبّت
+python packaging/build.py                                  # macOS or Linux
+powershell -ExecutionPolicy Bypass -File build.ps1         # Windows, with installer
 ```
 
-<div dir="rtl">
+- **Windows**: `dist\LockControl\`, a portable zip, and the installer if [Inno Setup 6](https://jrsoftware.org/isinfo.php) is installed.
+- **macOS**: `dist/LockControl.app` and a `.dmg`.
+- **Linux**: `dist/LockControl/` and a `.tar.gz`.
+- Diagnostics: `LockControl --self-check result.json` checks the secret store and OS verification.
 
-- **ويندوز**: `dist\LockControl\`، و zip محمول، والمثبّت إن كان [Inno Setup 6](https://jrsoftware.org/isinfo.php) مثبّتاً.
-- **ماك**: `dist/LockControl.app` و `.dmg`.
-- **لينكس**: `dist/LockControl/` و `.tar.gz`.
-- للتشخيص: `LockControl --self-check result.json` يتحقق من مخزن الأسرار وتحقق النظام.
+### Automatic releases (GitHub Actions)
 
-### إصدار جديد تلقائياً (GitHub Actions)
+[`.github/workflows/build.yml`](.github/workflows/build.yml) runs the tests on all three systems on every push. Pushing a **tag** that starts with `v` also builds all three and publishes them as a Release:
 
-الملف [`.github/workflows/build.yml`](.github/workflows/build.yml) يشغّل الاختبارات على الأنظمة الثلاثة عند كل رفع. عند رفع **وسم (tag)** يبدأ بـ `v`، يبني الأنظمة الثلاثة وينشرها في Release تلقائياً:
+1. Bump the version in `src/lockcontrol/__init__.py` and `pyproject.toml`, then commit.
+2. Create the tag, e.g. `v0.2.0`:
+   - In GitHub Desktop: *History* → right-click the commit → *Create Tag*.
+   - Or from a terminal: `git tag v0.2.0`.
+3. Push. The Release with all three builds appears within minutes.
 
-1. غيّر الإصدار في `src/lockcontrol/__init__.py` و `pyproject.toml`، ثم احفظ التغيير في commit.
-2. أنشئ الوسم، مثلاً `v0.2.0`:
-   - من GitHub Desktop: *History* ← زر الفأرة الأيمن على الـ commit ← *Create Tag*.
-   - أو من الطرفية: `git tag v0.2.0`.
-3. ارفع (*Push*). يُنشر الـ Release بالملفات الثلاثة خلال دقائق.
-
-## بنية المشروع
-
-</div>
+## Project structure
 
 ```
 src/lockcontrol/
-├─ core/                    # منطق بدون واجهة
-│  ├─ signing.py            # توقيع HMAC-SHA256 لطلبات Tuya OpenAPI
-│  ├─ token_manager.py      # جلب التوكن وتجديده قبل انتهائه
-│  ├─ tuya_client.py        # العميل: المناطق، الطلبات، إعادة المحاولة عند انتهاء التوكن
-│  ├─ lock_service.py       # سرد الأقفال، الحالة، الفتح عن بُعد (أسلوبان مع تبديل تلقائي)
-│  ├─ storage.py            # JSON ذرّي + نسخة احتياطية + Credential Manager
-│  ├─ security.py           # التحقق اليومي، الـ PIN، حد المحاولات
-│  ├─ verify.py             # اختيار تحقق النظام حسب نظام التشغيل
-│  ├─ windows_auth.py       # Windows Hello (WinRT) وبديل كلمة مرور ويندوز
-│  ├─ macos_auth.py         # Touch ID / كلمة مرور الجهاز (LocalAuthentication)
-│  ├─ autostart.py          # التشغيل مع النظام (Run / LaunchAgent / autostart)
-│  └─ backup.py             # تصدير/استيراد مشفّر (scrypt + Fernet)
-├─ ui/                      # واجهة PySide6
-│  ├─ main_window.py        # زر الفتح والحالة
-│  ├─ settings_dialog.py    # الربط، الأقفال، الإعدادات العامة
-│  ├─ auth.py               # نوافذ التحقق والـ PIN
-│  ├─ controller.py         # شريط المهام، الاختصار، تطبيق الإعدادات
-│  ├─ hotkeys.py            # الاختصار العام لكل نظام (pynput على ماك ولينكس)
-│  ├─ win_events.py         # RegisterHotKey وإشعارات قفل الجلسة (ويندوز)
-│  └─ messages.py           # رسائل الأخطاء العربية
-├─ app_context.py           # يجمع الخدمات المشتركة
-├─ cli.py                   # أداة سطر الأوامر
-└─ __main__.py              # نقطة التشغيل (--minimized, --self-check)
+├─ core/                    # logic, no UI
+│  ├─ signing.py            # HMAC-SHA256 signing for Tuya OpenAPI requests
+│  ├─ token_manager.py      # fetches the token and refreshes it before expiry
+│  ├─ tuya_client.py        # client: regions, requests, retry on expired token
+│  ├─ lock_service.py       # lock listing, status, remote unlock (two methods with fallback)
+│  ├─ storage.py            # atomic JSON + backup + OS secret store
+│  ├─ security.py           # daily verification, PIN, attempt limits
+│  ├─ verify.py             # picks the OS verifier for the current platform
+│  ├─ windows_auth.py       # Windows Hello (WinRT) with Windows password fallback
+│  ├─ macos_auth.py         # Touch ID / device password (LocalAuthentication)
+│  ├─ autostart.py          # start with the OS (Run key / LaunchAgent / autostart)
+│  └─ backup.py             # encrypted export/import (scrypt + Fernet)
+├─ ui/                      # PySide6 UI
+│  ├─ main_window.py        # unlock button and status
+│  ├─ settings_dialog.py    # Tuya connection, locks, general settings
+│  ├─ auth.py               # verification and PIN dialogs
+│  ├─ controller.py         # tray, hotkey, applying settings
+│  ├─ hotkeys.py            # global hotkey per OS (pynput on macOS/Linux)
+│  ├─ win_events.py         # RegisterHotKey and screen-lock events (Windows)
+│  └─ messages.py           # user-facing error messages (Arabic)
+├─ app_context.py           # shared services
+├─ cli.py                   # command-line tool
+└─ __main__.py              # entry point (--minimized, --self-check)
 ```
 
-<div dir="rtl">
+## Tuya APIs used
 
-## واجهات تويا المستخدمة
-
-| الغرض | الواجهة |
+| Purpose | Endpoint |
 |---|---|
-| التوكن | `GET /v1.0/token`، `GET /v1.0/token/{refresh_token}` |
-| سرد الأجهزة | `GET /v1.0/iot-01/associated-users/devices` (والبديل `GET /v1.0/users/{uid}/devices` عند إدخال UID) |
-| الحالة | `GET /v1.0/devices/{device_id}` |
-| الفتح | `POST /v1.0/devices/{id}/door-lock/password-ticket` ثم `POST /v1.0/smart-lock/devices/{id}/password-free/door-operate` (والبديل `.../door-lock/password-free/open-door`) |
+| Token | `GET /v1.0/token`, `GET /v1.0/token/{refresh_token}` |
+| List devices | `GET /v1.0/iot-01/associated-users/devices` (fallback: `GET /v1.0/users/{uid}/devices` when a UID is set) |
+| Status | `GET /v1.0/devices/{device_id}` |
+| Unlock | `POST /v1.0/devices/{id}/door-lock/password-ticket`, then `POST /v1.0/smart-lock/devices/{id}/password-free/door-operate` (fallback: `.../door-lock/password-free/open-door`) |
 
-كل عملية فتح تستهلك 2–3 طلبات API، وقراءة الحالة طلباً واحداً.
+Each unlock uses 2–3 API calls; reading the status uses one.
 
-## حل المشكلات
+## Troubleshooting
 
-| الرسالة | الحل |
+| Message (shown in Arabic in the app) | Fix |
 |---|---|
-| لا توجد صلاحية (1106) | تأكد من ربط حساب التطبيق (Link App Account) ومن مركز البيانات |
-| المشروع غير مخوّل لهذه الخدمة | فعّل IoT Core و Smart Lock Open Service من Cloud Services |
-| انتهى اشتراك خدمة IoT Core | جدّد من Cloud Services ← My Services ← Extend Trial Period |
-| ساعة الكمبيوتر غير مضبوطة | فعّل «ضبط الوقت تلقائياً» في ويندوز |
-| القفل غير متصل بالإنترنت | تحقق من اتصال القفل أو البوابة (Gateway) |
-| هذا القفل لا يدعم الفتح عن بُعد | فعّل الفتح عن بُعد من تطبيق Smart Life، أو القفل لا يدعمه عبر الكلاود |
+| No permission (1106) | Make sure the app account is linked (Link App Account) and the data center is correct |
+| Project not authorized for this service | Subscribe to IoT Core and Smart Lock Open Service under Cloud Services |
+| IoT Core subscription expired | Renew under Cloud Services → My Services → Extend Trial Period |
+| Computer clock is wrong | Turn on automatic time in your OS settings |
+| Lock is offline | Check the lock's or gateway's connection |
+| Lock doesn't support remote unlock | Enable remote unlock in the Smart Life app, or the lock doesn't support it through the cloud |
 
-## الترخيص
+## License
 
-[MIT](LICENSE). هذا مشروع مستقل غير تابع لشركة Tuya.
-
-</div>
+[MIT](LICENSE). This is an independent project, not affiliated with Tuya.
