@@ -13,10 +13,10 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable, Protocol
+from typing import Callable
 
 from .storage import SecretStore
-from .windows_auth import VerifyOutcome
+from .verify import Verifier, VerifyOutcome
 
 PIN_MIN, PIN_MAX = 4, 8
 LOCKOUT_AFTER = 3
@@ -24,10 +24,6 @@ LOCKOUT_SECONDS = 60
 REVERIFY_AFTER = 5
 
 _SCRYPT_N, _SCRYPT_R, _SCRYPT_P = 2**14, 8, 1
-
-
-class Verifier(Protocol):
-    def verify(self, message: str, hwnd: int | None = None) -> VerifyOutcome: ...
 
 
 class PinStatus(enum.Enum):
@@ -84,7 +80,12 @@ class SecurityManager:
         self._today = today
         self._lock = threading.Lock()
 
-    # ----- تحقق ويندوز اليومي -----
+    # ----- تحقق النظام اليومي -----
+
+    @property
+    def os_auth_supported(self) -> bool:
+        """False على لينكس: لا نافذة تحقق، والـ PIN وحده يحمي البرنامج."""
+        return getattr(self._verifier, "supported", True)
 
     def is_day_verified(self) -> bool:
         return self._state().get("verified_day") == self._today().isoformat()
@@ -94,7 +95,7 @@ class SecurityManager:
         state, today = self._state(), self._today().isoformat()
         return state.get("verified_day") == today and state.get("pin_day") == today
 
-    def verify_windows(self, message: str, hwnd: int | None = None) -> VerifyOutcome:
+    def verify_os(self, message: str, hwnd: int | None = None) -> VerifyOutcome:
         outcome = self._verifier.verify(message, hwnd)
         if outcome is VerifyOutcome.VERIFIED:
             with self._lock:
@@ -125,7 +126,7 @@ class SecurityManager:
         """نسيت الـ PIN: تحقق ويندوز جديد ثم PIN جديد."""
         if not validate_pin(new_pin):
             raise ValueError(f"الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام")
-        outcome = self.verify_windows(message, hwnd)
+        outcome = self.verify_os(message, hwnd)
         if outcome is VerifyOutcome.VERIFIED:
             self._secrets.set("pin_hash", hash_pin(new_pin))
             self._mark_pin_today()

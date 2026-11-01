@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lockcontrol"
 version = "0.1.0"
-description = "التحكم بأقفال تويا الذكية من ويندوز عبر Tuya Cloud"
+description = "التحكم بأقفال تويا الذكية من الكمبيوتر (ويندوز، ماك، لينكس) عبر Tuya Cloud"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -17,10 +17,13 @@ dependencies = [
     "winrt-runtime>=2; sys_platform == 'win32'",
     "winrt-Windows.Foundation>=2; sys_platform == 'win32'",
     "winrt-Windows.Security.Credentials.UI>=2; sys_platform == 'win32'",
+    "pyobjc-framework-LocalAuthentication>=10; sys_platform == 'darwin'",
+    "pynput>=1.7; sys_platform != 'win32'",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "respx>=0.21", "pytest-qt>=4.4", "pyinstaller>=6.10"]
+dev = ["pytest>=8", "respx>=0.21", "pytest-qt>=4.4"]
+build = ["pyinstaller>=6.10", "pillow>=10"]
 
 [project.scripts]
 lockcontrol-cli = "lockcontrol.cli:main"

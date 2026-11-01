@@ -6,18 +6,12 @@
 
 import asyncio
 import ctypes
-import enum
 import sys
 import threading
 import time
 from ctypes import wintypes
 
-
-class VerifyOutcome(enum.Enum):
-    VERIFIED = "verified"
-    CANCELED = "canceled"
-    FAILED = "failed"
-    UNAVAILABLE = "unavailable"
+from .verify import VerifyOutcome
 
 
 # ---------- Windows Hello ----------
@@ -148,6 +142,8 @@ def _password_verify(message: str, caption: str, hwnd: int | None) -> VerifyOutc
 
 
 class WindowsVerifier:
+    supported = True
+
     def verify(self, message: str, hwnd: int | None = None) -> VerifyOutcome:
         if sys.platform != "win32":
             return VerifyOutcome.UNAVAILABLE

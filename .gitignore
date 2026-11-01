@@ -13,3 +13,4 @@ packaging/lockcontrol.ico
 *.log
 .claude/
 *.egg-info/
+packaging/lockcontrol.png

@@ -1,4 +1,4 @@
-"""نوافذ الحماية: تحقق ويندوز اليومي، وإدخال/تعيين/تغيير الـ PIN."""
+"""نوافذ الحماية: تحقق النظام اليومي، وإدخال/تعيين/تغيير الـ PIN."""
 
 import enum
 
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 
 from ..app_context import AppContext
 from ..core.security import PIN_MAX, PIN_MIN, PinStatus, validate_pin
-from ..core.windows_auth import VerifyOutcome
+from ..core.verify import VerifyOutcome, os_auth_name
 from .style import set_role
 from .worker import run_in_background
 
@@ -52,7 +52,7 @@ class AuthGateDialog(_ForegroundDialog):
         self.setWindowTitle("التحقق من الهوية")
         self.setMinimumWidth(360)
 
-        self.info = QLabel("للمتابعة تحقق من هويتك عبر ويندوز.\nيُطلب هذا مرة واحدة يومياً.")
+        self.info = QLabel(f"للمتابعة تحقق من هويتك عبر {os_auth_name()}.\nيُطلب هذا مرة واحدة يومياً.")
         self.info.setWordWrap(True)
         self.status = QLabel("")
         self.status.setObjectName("muted")
@@ -71,10 +71,10 @@ class AuthGateDialog(_ForegroundDialog):
     def start(self):
         self.retry.setEnabled(False)
         set_role(self.status, "muted")
-        self.status.setText("بانتظار Windows Hello...")
+        self.status.setText(f"بانتظار {os_auth_name()}...")
         hwnd = int(self.winId())
         run_in_background(
-            lambda: self.ctx.security.verify_windows(VERIFY_MESSAGE, hwnd), self._done, self._error
+            lambda: self.ctx.security.verify_os(VERIFY_MESSAGE, hwnd), self._done, self._error
         )
 
     def _done(self, outcome: VerifyOutcome):
@@ -84,7 +84,7 @@ class AuthGateDialog(_ForegroundDialog):
         texts = {
             VerifyOutcome.CANCELED: "أُلغي التحقق.",
             VerifyOutcome.FAILED: "فشل التحقق.",
-            VerifyOutcome.UNAVAILABLE: "التحقق عبر ويندوز غير متاح على هذا الجهاز.",
+            VerifyOutcome.UNAVAILABLE: f"التحقق عبر {os_auth_name()} غير متاح على هذا الجهاز.",
         }
         self._show_error(texts[outcome])
 
@@ -222,7 +222,7 @@ class PinResetDialog(_ForegroundDialog):
         self.setWindowTitle("إعادة تعيين الـ PIN")
         self.new = _pin_field()
         self.confirm = _pin_field()
-        self.message = QLabel("سيُطلب منك التحقق عبر ويندوز بعد إدخال الرمز الجديد.")
+        self.message = QLabel(f"سيُطلب منك التحقق عبر {os_auth_name()} بعد إدخال الرمز الجديد.")
         self.message.setWordWrap(True)
         form = QFormLayout()
         form.addRow("الـ PIN الجديد:", self.new)
@@ -258,9 +258,12 @@ class PinResetDialog(_ForegroundDialog):
 
 
 def ensure_verified(ctx: AppContext, parent: QWidget | None = None) -> bool:
-    """تحقق ويندوز إن لم يتم اليوم، ثم تعيين PIN إن لم يوجد."""
+    """تحقق النظام إن لم يتم اليوم، ثم تعيين PIN إن لم يوجد."""
     if not ctx.security.is_day_verified():
-        if AuthGateDialog(ctx, parent).exec() != QDialog.DialogCode.Accepted:
+        if not ctx.security.os_auth_supported:
+            # لينكس: لا تحقق من النظام، والـ PIN وحده يحمي البرنامج.
+            ctx.security.verify_os("")
+        elif AuthGateDialog(ctx, parent).exec() != QDialog.DialogCode.Accepted:
             return False
     if not ctx.security.has_pin():
         return PinDialog(ctx, PinMode.SETUP, parent).exec() == QDialog.DialogCode.Accepted

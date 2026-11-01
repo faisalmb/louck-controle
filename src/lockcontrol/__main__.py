@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 
 from .app_context import AppContext
 from .core.storage import SecretStore, SettingsStore
-from .core.windows_auth import WindowsVerifier
+from .core.verify import default_verifier
 from .ui.auth import daily_gate
 from .ui.controller import AppController
 from .ui.style import APP_STYLE
@@ -19,13 +19,25 @@ def self_check(path: str) -> int:
 
     import keyring
 
-    from .core.windows_auth import hello_available
-
+    verifier = default_verifier()
     report = {
+        "platform": sys.platform,
         "keyring_backend": type(keyring.get_keyring()).__name__,
-        "hello_available": hello_available(),
+        "verifier": type(verifier).__name__,
+        "os_auth_supported": verifier.supported,
         "settings_dir": str(SettingsStore().data_dir),
     }
+    if sys.platform == "win32":
+        from .core.windows_auth import hello_available
+
+        report["hello_available"] = hello_available()
+    elif sys.platform == "darwin":
+        try:
+            import LocalAuthentication  # noqa: F401
+
+            report["local_authentication"] = True
+        except ImportError:
+            report["local_authentication"] = False
     with open(path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False)
     return 0
@@ -48,7 +60,7 @@ def main() -> int:
         QMessageBox.information(None, "LockControl", "البرنامج يعمل بالفعل في شريط المهام.")
         return 0
 
-    ctx = AppContext(store, SecretStore(), WindowsVerifier())
+    ctx = AppContext(store, SecretStore(), default_verifier())
 
     # مع ويندوز يبدأ مصغّراً، والتحقق يُطلب عند أول استخدام.
     if not minimized and not daily_gate(ctx):

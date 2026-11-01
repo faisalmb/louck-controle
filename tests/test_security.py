@@ -3,7 +3,6 @@ from datetime import date, timedelta
 
 import pytest
 
-from lockcontrol.core import windows_auth
 from lockcontrol.core.security import (
     LOCKOUT_SECONDS,
     PinStatus,
@@ -13,7 +12,7 @@ from lockcontrol.core.security import (
     validate_pin,
 )
 from lockcontrol.core.storage import SecretStore
-from lockcontrol.core.windows_auth import VerifyOutcome
+from lockcontrol.core.verify import VerifyOutcome
 
 
 class FakeVerifier:
@@ -37,7 +36,7 @@ class Env:
         )
 
     def ready(self, pin="1234"):
-        self.sec.verify_windows("msg")
+        self.sec.verify_os("msg")
         self.sec.set_pin(pin)
         return self.sec
 
@@ -62,7 +61,7 @@ def test_hash_is_salted_and_verifiable():
 
 def test_day_verification_expires_next_day(env):
     assert not env.sec.is_day_verified()
-    assert env.sec.verify_windows("msg") is VerifyOutcome.VERIFIED
+    assert env.sec.verify_os("msg") is VerifyOutcome.VERIFIED
     assert env.sec.is_day_verified()
     env.day += timedelta(days=1)
     assert not env.sec.is_day_verified()
@@ -70,19 +69,19 @@ def test_day_verification_expires_next_day(env):
 
 def test_failed_windows_verification_does_not_mark_day(env):
     env.verifier.outcome = VerifyOutcome.CANCELED
-    assert env.sec.verify_windows("msg") is VerifyOutcome.CANCELED
+    assert env.sec.verify_os("msg") is VerifyOutcome.CANCELED
     assert not env.sec.is_day_verified()
 
 
 def test_pin_requires_day_verification(env):
     env.sec.set_pin("1234")
     assert env.sec.check_pin("1234").status is PinStatus.REVERIFY_REQUIRED
-    env.sec.verify_windows("msg")
+    env.sec.verify_os("msg")
     assert env.sec.check_pin("1234").status is PinStatus.OK
 
 
 def test_pin_not_set(env):
-    env.sec.verify_windows("msg")
+    env.sec.verify_os("msg")
     assert env.sec.check_pin("1234").status is PinStatus.NOT_SET
 
 
@@ -145,11 +144,15 @@ def test_invalidate_day(env):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_real_logon_rejects_bad_password():
+    from lockcontrol.core import windows_auth
+
     assert windows_auth.logon_user_valid("lockcontrol_no_such_user", ".", "wrong") is False
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_real_hello_availability_check_runs():
+    from lockcontrol.core import windows_auth
+
     assert isinstance(windows_auth.hello_available(), bool)
 
 
@@ -158,7 +161,7 @@ def test_pin_unlocks_the_day(env):
     assert sec.is_unlocked_today()
     env.day += timedelta(days=1)
     assert not sec.is_unlocked_today()
-    sec.verify_windows("msg")
+    sec.verify_os("msg")
     assert not sec.is_unlocked_today()  # ويندوز وحده لا يكفي
     assert sec.check_pin("1234").status is PinStatus.OK
     assert sec.is_unlocked_today()

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=LockControl
+Name[ar]=التحكم بالأقفال
+Comment=Unlock Tuya smart locks via Tuya Cloud
+Exec=LockControl
+Icon=lockcontrol
+Terminal=false
+Categories=Utility;

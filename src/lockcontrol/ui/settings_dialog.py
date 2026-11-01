@@ -1,5 +1,6 @@
 """نافذة الإعدادات: الربط بتويا، الأقفال والقفل الافتراضي، والخيارات العامة."""
 
+import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -31,6 +32,7 @@ from ..core.lock_service import LockService, RemoteLock, merge_locks
 from ..core.storage import LockInfo
 from ..core.token_manager import MemoryTokenStore
 from ..core.tuya_client import REGION_NAMES, TuyaClient, TuyaCredentials
+from ..core.verify import os_name
 from .auth import PinDialog, PinMode
 from .messages import describe_error
 from .style import set_role
@@ -245,15 +247,16 @@ class SettingsDialog(QDialog):
 
     def _build_general_tab(self) -> QWidget:
         ui = self.ctx.settings.ui
-        self.start_with_windows = QCheckBox("تشغيل البرنامج مع ويندوز")
+        self.start_with_windows = QCheckBox(f"تشغيل البرنامج مع {os_name()}")
         self.start_with_windows.setChecked(ui.start_with_windows)
         self.minimize_to_tray = QCheckBox("التصغير إلى شريط المهام عند الإغلاق")
         self.minimize_to_tray.setChecked(ui.minimize_to_tray)
         self.reverify = QCheckBox("طلب تحقق ويندوز من جديد بعد قفل الجهاز (Win+L)")
         self.reverify.setChecked(ui.reverify_on_session_lock)
+        self.reverify.setVisible(sys.platform == "win32")  # إشعار قفل الجلسة متاح على ويندوز فقط
         self.pin_every_open = QCheckBox("طلب الـ PIN عند كل فتح للقفل (افتراضياً: مرة يومياً)")
         self.pin_every_open.setChecked(ui.pin_every_open)
-        self.hotkey =QKeySequenceEdit(QKeySequence(ui.hotkey))
+        self.hotkey = QKeySequenceEdit(QKeySequence(ui.hotkey))
         self.hotkey.setMaximumSequenceLength(1)
         self.hotkey.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         change_pin = QPushButton("تغيير الـ PIN")

@@ -1,6 +1,8 @@
 ; مثبّت LockControl — يُبنى بـ build.ps1 بعد PyInstaller
 #define AppName "LockControl"
-#define AppVersion "0.1.0"
+#ifndef AppVersion
+  #define AppVersion "0.1.0"
+#endif
 
 [Setup]
 AppId={{6E1B7C52-4F0B-4F0E-9B8B-3C1D2E7A9F10}

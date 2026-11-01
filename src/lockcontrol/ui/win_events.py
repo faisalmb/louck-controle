@@ -8,6 +8,8 @@ from typing import Callable
 from PySide6.QtCore import QAbstractNativeEventFilter, QKeyCombination, Qt
 from PySide6.QtGui import QKeySequence
 
+from .hotkeys import HotkeyError
+
 WM_HOTKEY = 0x0312
 WM_WTSSESSION_CHANGE = 0x02B1
 WTS_SESSION_LOCK = 0x7
@@ -17,10 +19,6 @@ MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_WIN, MOD_NOREPEAT = 0x1, 0x2, 0x4, 0x8, 0x4
 
 HOTKEY_ID = 0x4C43  # "LC"
 HOTKEY_DEBOUNCE_SECONDS = 0.5
-
-
-class HotkeyError(ValueError):
-    pass
 
 
 def parse_hotkey(text: str) -> tuple[int, int]:

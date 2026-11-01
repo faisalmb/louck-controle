@@ -1,6 +1,4 @@
-"""يربط النافذة الرئيسية بأيقونة شريط المهام والاختصار العام والتشغيل مع ويندوز."""
-
-import sys
+"""يربط النافذة الرئيسية بأيقونة شريط المهام والاختصار العام والتشغيل مع النظام."""
 
 from PySide6.QtCore import QObject, QTimer
 from PySide6.QtGui import QAction
@@ -8,12 +6,13 @@ from PySide6.QtWidgets import QApplication, QDialog, QMenu, QSystemTrayIcon
 
 from ..app_context import AppContext
 from ..core import autostart
+from ..core.verify import os_name
 from .auth import authorize, daily_gate
 from .history_dialog import HistoryDialog
+from .hotkeys import HotkeyError, create_system_events
 from .icons import lock_icon
 from .main_window import MainWindow
 from .settings_dialog import SettingsDialog
-from .win_events import HotkeyError, WindowsEventFilter
 
 
 class AppController(QObject):
@@ -36,10 +35,8 @@ class AppController(QObject):
         self.menu = QMenu()
         self.tray.setContextMenu(self.menu)
 
-        self.events = WindowsEventFilter(self.hotkey_pressed, self.session_locked)
-        if sys.platform == "win32":
-            app.installNativeEventFilter(self.events)
-            self.events.attach(int(self.window.winId()))
+        self.events = create_system_events(app, self.hotkey_pressed, self.session_locked)
+        self.events.attach(self.window)
         app.aboutToQuit.connect(self._cleanup)
 
         self.apply_runtime_settings()
@@ -50,8 +47,6 @@ class AppController(QObject):
     def apply_runtime_settings(self) -> None:
         ui = self.ctx.settings.ui
         self._rebuild_menu()
-        if sys.platform != "win32":
-            return
         try:
             self.events.register_hotkey(ui.hotkey)
         except HotkeyError as e:
@@ -60,7 +55,7 @@ class AppController(QObject):
             if autostart.is_enabled() != ui.start_with_windows:
                 autostart.set_enabled(ui.start_with_windows)
         except OSError as e:
-            self.tray.showMessage("التشغيل مع ويندوز", str(e), QSystemTrayIcon.MessageIcon.Warning)
+            self.tray.showMessage(f"التشغيل مع {os_name()}", str(e), QSystemTrayIcon.MessageIcon.Warning)
 
     def _rebuild_menu(self) -> None:
         self.menu.clear()
@@ -147,7 +142,5 @@ class AppController(QObject):
         self.tray.showMessage("التحكم بالأقفال", self.window.message.text(), icon, 4000)
 
     def _cleanup(self) -> None:
-        if sys.platform == "win32":
-            self.events.detach()
-            self.app.removeNativeEventFilter(self.events)
+        self.events.detach()
         self.tray.hide()

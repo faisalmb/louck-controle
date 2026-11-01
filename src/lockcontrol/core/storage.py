@@ -1,12 +1,15 @@
 """تخزين دائم للبرنامج.
 
-- الإعدادات غير السرية في settings.json، والسجل في history.json داخل %APPDATA%\\LockControl.
-- الأسرار (Client Secret، التوكن، بصمة PIN...) في Windows Credential Manager عبر keyring.
+- الإعدادات غير السرية في settings.json، والسجل في history.json داخل مجلد بيانات البرنامج
+  (%APPDATA%\\LockControl، أو ~/Library/Application Support/LockControl، أو ~/.config/lockcontrol).
+- الأسرار (Client Secret، التوكن، بصمة PIN...) في مخزن أسرار النظام عبر keyring:
+  Windows Credential Manager، أو Keychain على ماك، أو Secret Service على لينكس.
 - كل كتابة ذرّية: ملف مؤقت ثم os.replace، مع نسخة .bak تُستعاد إذا تلف الملف الأصلي.
 """
 
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
@@ -19,9 +22,14 @@ SCHEMA_VERSION = 1
 HISTORY_LIMIT = 200
 
 
-def default_data_dir() -> Path:
-    base = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-    return Path(base) / APP_NAME
+def default_data_dir(platform: str = sys.platform) -> Path:
+    if platform == "win32":
+        base = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+        return Path(base) / APP_NAME
+    if platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / APP_NAME
+    base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    return Path(base) / APP_NAME.lower()
 
 
 # ---------- ملفات JSON ----------

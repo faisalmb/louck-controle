@@ -13,20 +13,22 @@ from lockcontrol.core.storage import HistoryEntry
 from lockcontrol.ui import controller as controller_module
 from lockcontrol.ui.controller import AppController
 from lockcontrol.ui.history_dialog import HistoryDialog
-from lockcontrol.ui.win_events import (
-    HOTKEY_ID,
-    MOD_ALT,
-    MOD_CONTROL,
-    MOD_NOREPEAT,
-    MOD_SHIFT,
-    WM_HOTKEY,
-    WM_WTSSESSION_CHANGE,
-    WTS_SESSION_LOCK,
-    HotkeyError,
-    WindowsEventFilter,
-    parse_hotkey,
-)
+from lockcontrol.ui.hotkeys import HotkeyError
 from test_ui import ctx  # noqa: F401  (fixture)
+
+if sys.platform == "win32":
+    from lockcontrol.ui.win_events import (
+        HOTKEY_ID,
+        MOD_ALT,
+        MOD_CONTROL,
+        MOD_NOREPEAT,
+        MOD_SHIFT,
+        WM_HOTKEY,
+        WM_WTSSESSION_CHANGE,
+        WTS_SESSION_LOCK,
+        WindowsEventFilter,
+        parse_hotkey,
+    )
 
 windows_only = pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 
@@ -35,6 +37,7 @@ def native_platform() -> bool:
     return QGuiApplication.platformName() == "windows"
 
 
+@windows_only
 def test_parse_hotkey():
     assert parse_hotkey("Ctrl+Alt+O") == (MOD_NOREPEAT | MOD_CONTROL | MOD_ALT, ord("O"))
     assert parse_hotkey("Ctrl+Shift+5") == (MOD_NOREPEAT | MOD_CONTROL | MOD_SHIFT, ord("5"))
@@ -100,6 +103,21 @@ def controller(qtbot, qapp, ctx, monkeypatch):  # noqa: F811
         controller_module.autostart, "set_enabled", lambda on: registry.__setitem__("enabled", on)
     )
     ctx.settings.ui.hotkey = "Ctrl+Alt+Shift+F10"
+    if sys.platform != "win32":
+        # خوادم CI بلا شاشة ولا أذونات لوحة مفاتيح؛ pynput مختبر في test_platform.
+        class FakeEvents:
+            supports_session_lock = False
+
+            def attach(self, window):
+                pass
+
+            def register_hotkey(self, text):
+                pass
+
+            def detach(self):
+                pass
+
+        monkeypatch.setattr(controller_module, "create_system_events", lambda app, h, s: FakeEvents())
     c = AppController(ctx, qapp)
     qtbot.addWidget(c.window)
     c.registry = registry
@@ -133,7 +151,7 @@ def test_autostart_follows_settings(controller):
 
 def test_session_lock_invalidates_day_only_if_enabled(controller):
     sec = controller.ctx.security
-    sec.verify_windows("m")
+    sec.verify_os("m")
     controller.session_locked()
     assert sec.is_day_verified()
     controller.ctx.settings.ui.reverify_on_session_lock = True

@@ -8,7 +8,7 @@ from lockcontrol.core.errors import TuyaError
 from lockcontrol.core.lock_service import LockOpenError, LockStatus, RemoteLock
 from lockcontrol.core.security import PinStatus
 from lockcontrol.core.storage import LockInfo, SecretStore, SettingsStore
-from lockcontrol.core.windows_auth import VerifyOutcome
+from lockcontrol.core.verify import VerifyOutcome
 from lockcontrol.ui.auth import PinDialog, PinMode
 from lockcontrol.ui.main_window import MainWindow
 from lockcontrol.ui.settings_dialog import SettingsDialog
@@ -146,7 +146,7 @@ def test_settings_sync_merges_remote_locks(qtbot, ctx, monkeypatch):
 
 
 def test_pin_dialog_wrong_then_right(qtbot, ctx):
-    ctx.security.verify_windows("m")
+    ctx.security.verify_os("m")
     ctx.security.set_pin("2468")
     d = PinDialog(ctx, PinMode.ENTER)
     qtbot.addWidget(d)
@@ -159,7 +159,7 @@ def test_pin_dialog_wrong_then_right(qtbot, ctx):
 
 
 def test_pin_dialog_setup_validates(qtbot, ctx):
-    ctx.security.verify_windows("m")
+    ctx.security.verify_os("m")
     d = PinDialog(ctx, PinMode.SETUP)
     qtbot.addWidget(d)
     d.new.setText("12")
@@ -226,7 +226,7 @@ def test_authorize_asks_pin_once_per_day(ctx, monkeypatch):
     from lockcontrol.core.security import hash_pin
     from lockcontrol.ui.auth import authorize
 
-    ctx.security.verify_windows("m")
+    ctx.security.verify_os("m")
     ctx.secrets.set("pin_hash", hash_pin("1234"))
     prompts = _count_pin_prompts(monkeypatch)
     assert authorize(ctx)  # أول فتح اليوم: يُطلب
@@ -240,7 +240,7 @@ def test_authorize_every_time_when_enabled(ctx, monkeypatch):
     from lockcontrol.core.security import hash_pin
     from lockcontrol.ui.auth import authorize
 
-    ctx.security.verify_windows("m")
+    ctx.security.verify_os("m")
     ctx.secrets.set("pin_hash", hash_pin("1234"))
     ctx.security._mark_pin_today()
     prompts = _count_pin_prompts(monkeypatch)

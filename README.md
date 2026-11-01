@@ -2,9 +2,23 @@
 
 # Tuya Lock for Windows
 
-برنامج ويندوز لفتح أقفال **تويا (Tuya / Smart Life)** الذكية من الكمبيوتر بضغطة زر، عبر **Tuya Cloud API**.
+برنامج لفتح أقفال **تويا (Tuya / Smart Life)** الذكية من الكمبيوتر بضغطة زر، عبر **Tuya Cloud API**. صُمّم لويندوز، ويعمل أيضاً على **ماك** و**لينكس**.
 
-*A Windows desktop app (Python + PySide6) that unlocks Tuya smart locks through the Tuya Cloud OpenAPI, protected by Windows Hello and a PIN.*
+*A desktop app (Python + PySide6) for Windows, macOS and Linux that unlocks Tuya smart locks through the Tuya Cloud OpenAPI, protected by Windows Hello / Touch ID and a PIN.*
+
+[![build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
+
+## التحميل
+
+من صفحة [**Releases**](../../releases/latest):
+
+| النظام | الملف |
+|---|---|
+| ويندوز | `LockControl-Setup-x.y.z.exe` (مثبّت)، أو `...-windows-portable.zip` (بدون تثبيت) |
+| ماك (Apple Silicon) | `LockControl-x.y.z-macos.dmg` |
+| لينكس (x86_64) | `LockControl-x.y.z-linux-x86_64.tar.gz` |
+
+> الملفات غير موقّعة رقمياً. **ويندوز:** عند ظهور تحذير SmartScreen اضغط *More info ← Run anyway*. **ماك:** عند أول تشغيل انقر بزر الفأرة الأيمن على البرنامج ثم *Open*.
 
 <p align="center">
   <img src="docs/screenshots/main.png" width="300" alt="النافذة الرئيسية">
@@ -37,18 +51,29 @@
 - خيار لإعادة طلب التحقق بعد قفل الجهاز (`Win+L`).
 - الـ PIN يُحفظ كبصمة مشفّرة (scrypt مع salt)، ولا يُحفظ الرقم نفسه أبداً.
 
+## الفروق بين الأنظمة
+
+| الميزة | ويندوز | ماك | لينكس |
+|---|---|---|---|
+| تحقق النظام اليومي | Windows Hello، أو كلمة مرور الحساب | Touch ID، أو كلمة مرور الجهاز | غير متاح، والـ PIN وحده يحمي البرنامج |
+| حفظ الأسرار | Credential Manager | Keychain | Secret Service (GNOME Keyring / KWallet) |
+| الاختصار العام | ✓ | ✓ بعد منح إذن *Accessibility* من إعدادات الخصوصية | ✓ في جلسات X11، ولا يعمل غالباً في Wayland |
+| إعادة التحقق بعد قفل الجهاز | ✓ | — | — |
+| التشغيل مع النظام | سجل المستخدم (Run) | LaunchAgent | `~/.config/autostart` |
+| أيقونة شريط المهام | ✓ | ✓ (شريط القوائم) | ✓، وعلى GNOME تحتاج إضافة AppIndicator |
+
 ## أين تُحفظ البيانات
 
 | البيانات | المكان |
 |---|---|
-| الإعدادات، الأقفال، القفل الافتراضي، السجل | `%APPDATA%\LockControl\` (ملفات JSON تُكتب كتابة ذرّية مع نسخة احتياطية `.bak`) |
-| Client Secret، توكن تويا، بصمة الـ PIN، حالة التحقق اليومي | **Windows Credential Manager** (الخدمة `LockControl`)، محمية بحساب ويندوز |
+| الإعدادات، الأقفال، القفل الافتراضي، السجل | ويندوز: `%APPDATA%\LockControl\` · ماك: `~/Library/Application Support/LockControl/` · لينكس: `~/.config/lockcontrol/`. ملفات JSON تُكتب كتابة ذرّية مع نسخة احتياطية `.bak` |
+| Client Secret، توكن تويا، بصمة الـ PIN، حالة التحقق اليومي | مخزن أسرار النظام (الخدمة `LockControl`)، محمي بحساب المستخدم |
 
 لا يحتوي هذا المستودع أي مفاتيح أو بيانات حساب.
 
 ## المتطلبات
 
-- Windows 10 أو 11.
+- Windows 10 أو 11، أو macOS 12 فأحدث (Apple Silicon)، أو لينكس x86_64 حديث. على لينكس قد تحتاج الحزمة `libxcb-cursor0`.
 - حساب على [Tuya IoT Platform](https://platform.tuya.com) (الخطة المجانية تكفي).
 - قفل تويا يدعم **الفتح عن بُعد**، مربوط بتطبيق Smart Life أو Tuya Smart.
 - للتطوير: Python 3.12 أو أحدث.
@@ -121,17 +146,32 @@ set TUYA_REGION=eu
 
 ## البناء
 
+كل نظام يُبنى على نفسه، فلا يمكن بناء نسخة ماك من ويندوز.
+
 </div>
 
 ```bash
-powershell -ExecutionPolicy Bypass -File build.ps1
+python -m pip install -e ".[build]"
+python packaging/build.py                                  # ماك أو لينكس
+powershell -ExecutionPolicy Bypass -File build.ps1         # ويندوز، مع المثبّت
 ```
 
 <div dir="rtl">
 
-- البرنامج: `dist\LockControl\LockControl.exe` (PyInstaller، وضع onedir).
-- المثبّت: `dist\LockControl-Setup-x.y.z.exe`، إذا كان [Inno Setup 6](https://jrsoftware.org/isinfo.php) مثبّتاً.
-- للتشخيص: `LockControl.exe --self-check result.json` يتحقق من وجود Credential Manager و Windows Hello.
+- **ويندوز**: `dist\LockControl\`، و zip محمول، والمثبّت إن كان [Inno Setup 6](https://jrsoftware.org/isinfo.php) مثبّتاً.
+- **ماك**: `dist/LockControl.app` و `.dmg`.
+- **لينكس**: `dist/LockControl/` و `.tar.gz`.
+- للتشخيص: `LockControl --self-check result.json` يتحقق من مخزن الأسرار وتحقق النظام.
+
+### إصدار جديد تلقائياً (GitHub Actions)
+
+الملف [`.github/workflows/build.yml`](.github/workflows/build.yml) يشغّل الاختبارات على الأنظمة الثلاثة عند كل رفع. عند رفع **وسم (tag)** يبدأ بـ `v`، يبني الأنظمة الثلاثة وينشرها في Release تلقائياً:
+
+1. غيّر الإصدار في `src/lockcontrol/__init__.py` و `pyproject.toml`، ثم احفظ التغيير في commit.
+2. أنشئ الوسم، مثلاً `v0.2.0`:
+   - من GitHub Desktop: *History* ← زر الفأرة الأيمن على الـ commit ← *Create Tag*.
+   - أو من الطرفية: `git tag v0.2.0`.
+3. ارفع (*Push*). يُنشر الـ Release بالملفات الثلاثة خلال دقائق.
 
 ## بنية المشروع
 
@@ -146,15 +186,18 @@ src/lockcontrol/
 │  ├─ lock_service.py       # سرد الأقفال، الحالة، الفتح عن بُعد (أسلوبان مع تبديل تلقائي)
 │  ├─ storage.py            # JSON ذرّي + نسخة احتياطية + Credential Manager
 │  ├─ security.py           # التحقق اليومي، الـ PIN، حد المحاولات
+│  ├─ verify.py             # اختيار تحقق النظام حسب نظام التشغيل
 │  ├─ windows_auth.py       # Windows Hello (WinRT) وبديل كلمة مرور ويندوز
-│  ├─ autostart.py          # التشغيل مع ويندوز (HKCU\...\Run)
+│  ├─ macos_auth.py         # Touch ID / كلمة مرور الجهاز (LocalAuthentication)
+│  ├─ autostart.py          # التشغيل مع النظام (Run / LaunchAgent / autostart)
 │  └─ backup.py             # تصدير/استيراد مشفّر (scrypt + Fernet)
 ├─ ui/                      # واجهة PySide6
 │  ├─ main_window.py        # زر الفتح والحالة
 │  ├─ settings_dialog.py    # الربط، الأقفال، الإعدادات العامة
 │  ├─ auth.py               # نوافذ التحقق والـ PIN
 │  ├─ controller.py         # شريط المهام، الاختصار، تطبيق الإعدادات
-│  ├─ win_events.py         # RegisterHotKey وإشعارات قفل الجلسة
+│  ├─ hotkeys.py            # الاختصار العام لكل نظام (pynput على ماك ولينكس)
+│  ├─ win_events.py         # RegisterHotKey وإشعارات قفل الجلسة (ويندوز)
 │  └─ messages.py           # رسائل الأخطاء العربية
 ├─ app_context.py           # يجمع الخدمات المشتركة
 ├─ cli.py                   # أداة سطر الأوامر
