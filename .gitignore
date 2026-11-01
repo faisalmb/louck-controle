@@ -12,3 +12,4 @@ packaging/lockcontrol.ico
 *.lcb
 *.log
 .claude/
+*.egg-info/

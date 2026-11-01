@@ -1,2 +1,0 @@
-[console_scripts]
-lockcontrol-cli = lockcontrol.cli:main
