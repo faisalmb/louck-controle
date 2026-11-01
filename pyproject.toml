@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lockcontrol"
-version = "0.1.0"
+dynamic = ["version"]  # من src/lockcontrol/__init__.py
 description = "التحكم بأقفال تويا الذكية من الكمبيوتر (ويندوز، ماك، لينكس) عبر Tuya Cloud"
 requires-python = ">=3.12"
 license = "MIT"
@@ -30,6 +30,9 @@ lockcontrol-cli = "lockcontrol.cli:main"
 
 [project.gui-scripts]
 lockcontrol = "lockcontrol.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "lockcontrol.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]

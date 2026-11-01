@@ -165,13 +165,14 @@ powershell -ExecutionPolicy Bypass -File build.ps1         # ويندوز، مع
 
 ### إصدار جديد تلقائياً (GitHub Actions)
 
-الملف [`.github/workflows/build.yml`](.github/workflows/build.yml) يشغّل الاختبارات على الأنظمة الثلاثة عند كل رفع. عند رفع **وسم (tag)** يبدأ بـ `v`، يبني الأنظمة الثلاثة وينشرها في Release تلقائياً:
+الملف [`.github/workflows/build.yml`](.github/workflows/build.yml) يشغّل الاختبارات على الأنظمة الثلاثة عند كل رفع. أما الإصدارات فتلقائية:
 
-1. غيّر الإصدار في `src/lockcontrol/__init__.py` و `pyproject.toml`، ثم احفظ التغيير في commit.
-2. أنشئ الوسم، مثلاً `v0.2.0`:
-   - من GitHub Desktop: *History* ← زر الفأرة الأيمن على الـ commit ← *Create Tag*.
-   - أو من الطرفية: `git tag v0.2.0`.
-3. ارفع (*Push*). يُنشر الـ Release بالملفات الثلاثة خلال دقائق.
+1. غيّر `__version__` في [`src/lockcontrol/__init__.py`](src/lockcontrol/__init__.py)، مثلاً إلى `"0.2.0"`. هذا هو المكان الوحيد للإصدار.
+2. احفظ التغيير في commit وارفعه (*Push*) إلى `main`.
+
+إذا لم يكن هناك Release باسم `v0.2.0`، يبني الـ workflow الأنظمة الثلاثة، وينشئ الوسم `v0.2.0`، وينشر الـ Release، خلال حوالي 10–20 دقيقة.
+- الرفع الذي لا يغيّر رقم الإصدار يشغّل الاختبارات فقط.
+- لا يُنشر الـ Release إلا إذا نجح بناء الأنظمة الثلاثة.
 
 ## بنية المشروع
 

@@ -150,13 +150,12 @@ powershell -ExecutionPolicy Bypass -File build.ps1         # Windows, with insta
 
 ### Automatic releases (GitHub Actions)
 
-[`.github/workflows/build.yml`](.github/workflows/build.yml) runs the tests on all three systems on every push. Pushing a **tag** that starts with `v` also builds all three and publishes them as a Release:
+[`.github/workflows/build.yml`](.github/workflows/build.yml) runs the tests on all three systems on every push. Releases are automatic:
 
-1. Bump the version in `src/lockcontrol/__init__.py` and `pyproject.toml`, then commit.
-2. Create the tag, e.g. `v0.2.0`:
-   - In GitHub Desktop: *History* → right-click the commit → *Create Tag*.
-   - Or from a terminal: `git tag v0.2.0`.
-3. Push. The Release with all three builds appears within minutes.
+1. Change `__version__` in [`src/lockcontrol/__init__.py`](src/lockcontrol/__init__.py) (the only place the version lives), e.g. `"0.2.0"`.
+2. Commit and push to `main`.
+
+If no `v0.2.0` release exists yet, the workflow builds Windows, macOS and Linux, creates the `v0.2.0` tag and publishes the Release (about 10–20 minutes). Pushes that don't change the version only run the tests. A Release is published only if all three builds succeed.
 
 ## Project structure
 
