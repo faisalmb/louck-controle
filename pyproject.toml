@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lockcontrol"
+version = "0.1.0"
+description = "التحكم بأقفال تويا الذكية من ويندوز عبر Tuya Cloud"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "keyring>=25",
+    "cryptography>=42",
+    "PySide6-Essentials>=6.8",
+    "winrt-runtime>=2; sys_platform == 'win32'",
+    "winrt-Windows.Foundation>=2; sys_platform == 'win32'",
+    "winrt-Windows.Security.Credentials.UI>=2; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "respx>=0.21", "pytest-qt>=4.4", "pyinstaller>=6.10"]
+
+[project.scripts]
+lockcontrol-cli = "lockcontrol.cli:main"
+
+[project.gui-scripts]
+lockcontrol = "lockcontrol.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
