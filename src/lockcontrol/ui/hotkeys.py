@@ -12,6 +12,8 @@ from PySide6.QtCore import QKeyCombination, QObject, Qt, Signal, Slot
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QApplication, QWidget
 
+from ..i18n import t
+
 
 class HotkeyError(ValueError):
     pass
@@ -21,7 +23,7 @@ def to_pynput(text: str, platform: str = sys.platform) -> str:
     """'Ctrl+Alt+O' ← '<ctrl>+<alt>+o' بصيغة pynput."""
     sequence = QKeySequence(text)
     if sequence.isEmpty():
-        raise HotkeyError("اختصار فارغ")
+        raise HotkeyError(t("اختصار فارغ"))
     combo: QKeyCombination = sequence[0]
     key, mods = combo.key(), combo.keyboardModifiers()
 
@@ -37,7 +39,7 @@ def to_pynput(text: str, platform: str = sys.platform) -> str:
     if mods & Qt.KeyboardModifier.MetaModifier:
         parts.append(meta_name)
     if not parts:
-        raise HotkeyError("الاختصار يحتاج مفتاح تعديل مثل Ctrl أو Alt")
+        raise HotkeyError(t("الاختصار يحتاج مفتاح تعديل مثل Ctrl أو Alt"))
 
     k = key.value
     if Qt.Key.Key_A.value <= k <= Qt.Key.Key_Z.value or Qt.Key.Key_0.value <= k <= Qt.Key.Key_9.value:
@@ -47,7 +49,7 @@ def to_pynput(text: str, platform: str = sys.platform) -> str:
     elif k == Qt.Key.Key_Space.value:
         parts.append("<space>")
     else:
-        raise HotkeyError("استخدم حرفاً أو رقماً أو مفتاح F")
+        raise HotkeyError(t("استخدم حرفاً أو رقماً أو مفتاح F"))
     return "+".join(parts)
 
 
@@ -109,7 +111,7 @@ class PynputSystemEvents(QObject):
             self._listener.start()
         except Exception as e:  # لا شاشة X11، أو لا إذن على ماك
             self._listener = None
-            raise HotkeyError(f"تعذر تفعيل الاختصار على هذا النظام: {e}") from e
+            raise HotkeyError(t("تعذر تفعيل الاختصار على هذا النظام: {e}", e=e)) from e
 
     def detach(self) -> None:
         if self._listener is not None:

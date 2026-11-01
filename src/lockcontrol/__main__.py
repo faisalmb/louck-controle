@@ -10,6 +10,7 @@ from .core.storage import SecretStore, SettingsStore
 from .core.verify import default_verifier
 from .ui.auth import daily_gate
 from .ui.controller import AppController
+from .i18n import is_rtl, set_language, t
 from .ui.style import APP_STYLE
 
 
@@ -47,17 +48,21 @@ def main() -> int:
     if "--self-check" in sys.argv:
         return self_check(sys.argv[sys.argv.index("--self-check") + 1])
     minimized = "--minimized" in sys.argv
+    store = SettingsStore()
+    store.data_dir.mkdir(parents=True, exist_ok=True)
+    set_language(store.load().ui.language)
+
     app = QApplication(sys.argv)
     app.setApplicationName("LockControl")
-    app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+    app.setLayoutDirection(Qt.LayoutDirection.RightToLeft if is_rtl() else Qt.LayoutDirection.LeftToRight)
     app.setStyleSheet(APP_STYLE)
     app.setQuitOnLastWindowClosed(False)  # يبقى في شريط المهام
 
-    store = SettingsStore()
-    store.data_dir.mkdir(parents=True, exist_ok=True)
     instance_lock = QLockFile(str(store.data_dir / "app.lock"))
-    if not instance_lock.tryLock(100):
-        QMessageBox.information(None, "LockControl", "البرنامج يعمل بالفعل في شريط المهام.")
+    # بعد إعادة التشغيل ننتظر النسخة السابقة حتى تُغلق وتحرر القفل
+    wait_ms = 5000 if "--restarted" in sys.argv else 100
+    if not instance_lock.tryLock(wait_ms):
+        QMessageBox.information(None, "LockControl", t("البرنامج يعمل بالفعل في شريط المهام."))
         return 0
 
     ctx = AppContext(store, SecretStore(), default_verifier())

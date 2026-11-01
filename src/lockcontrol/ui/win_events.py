@@ -8,6 +8,7 @@ from typing import Callable
 from PySide6.QtCore import QAbstractNativeEventFilter, QKeyCombination, Qt
 from PySide6.QtGui import QKeySequence
 
+from ..i18n import t
 from .hotkeys import HotkeyError
 
 WM_HOTKEY = 0x0312
@@ -25,7 +26,7 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     """'Ctrl+Alt+O' ← (modifiers, virtual key) لـ RegisterHotKey."""
     sequence = QKeySequence(text)
     if sequence.isEmpty():
-        raise HotkeyError("اختصار فارغ")
+        raise HotkeyError(t("اختصار فارغ"))
     combo: QKeyCombination = sequence[0]
     key, mods = combo.key(), combo.keyboardModifiers()
 
@@ -39,7 +40,7 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     if mods & Qt.KeyboardModifier.MetaModifier:
         win_mods |= MOD_WIN
     if win_mods == MOD_NOREPEAT:
-        raise HotkeyError("الاختصار يحتاج Ctrl أو Alt أو Shift أو Win")
+        raise HotkeyError(t("الاختصار يحتاج Ctrl أو Alt أو Shift أو Win"))
 
     k = key.value if hasattr(key, "value") else int(key)
     if Qt.Key.Key_A.value <= k <= Qt.Key.Key_Z.value or Qt.Key.Key_0.value <= k <= Qt.Key.Key_9.value:
@@ -49,7 +50,7 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     elif k == Qt.Key.Key_Space.value:
         vk = 0x20
     else:
-        raise HotkeyError("استخدم حرفاً أو رقماً أو مفتاح F")
+        raise HotkeyError(t("استخدم حرفاً أو رقماً أو مفتاح F"))
     return win_mods, vk
 
 
@@ -79,7 +80,7 @@ class WindowsEventFilter(QAbstractNativeEventFilter):
         mods, vk = parse_hotkey(text)
         self.unregister_hotkey()
         if not ctypes.windll.user32.RegisterHotKey(wintypes.HWND(self._hwnd), HOTKEY_ID, mods, vk):
-            raise HotkeyError("الاختصار مستخدم من برنامج آخر")
+            raise HotkeyError(t("الاختصار مستخدم من برنامج آخر"))
         self._hotkey_registered = True
 
     def unregister_hotkey(self) -> None:

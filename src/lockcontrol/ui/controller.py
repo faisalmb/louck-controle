@@ -1,12 +1,13 @@
 """يربط النافذة الرئيسية بأيقونة شريط المهام والاختصار العام والتشغيل مع النظام."""
 
-from PySide6.QtCore import QObject, QTimer
+from PySide6.QtCore import QObject, QProcess, QTimer
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QApplication, QDialog, QMenu, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QDialog, QMenu, QMessageBox, QSystemTrayIcon
 
 from ..app_context import AppContext
 from ..core import autostart
 from ..core.verify import os_name
+from ..i18n import language, set_language, t
 from .auth import authorize, daily_gate
 from .history_dialog import HistoryDialog
 from .hotkeys import HotkeyError, create_system_events
@@ -30,7 +31,7 @@ class AppController(QObject):
         self.window.open_finished.connect(self._notify_open_result)
 
         self.tray = QSystemTrayIcon(lock_icon(), self)
-        self.tray.setToolTip("التحكم بالأقفال")
+        self.tray.setToolTip(t("التحكم بالأقفال"))
         self.tray.activated.connect(self._tray_activated)
         self.menu = QMenu()
         self.tray.setContextMenu(self.menu)
@@ -50,32 +51,32 @@ class AppController(QObject):
         try:
             self.events.register_hotkey(ui.hotkey)
         except HotkeyError as e:
-            self.tray.showMessage("الاختصار العام", f"{ui.hotkey}: {e}", QSystemTrayIcon.MessageIcon.Warning)
+            self.tray.showMessage(t("الاختصار العام"), f"{ui.hotkey}: {e}", QSystemTrayIcon.MessageIcon.Warning)
         try:
             if autostart.is_enabled() != ui.start_with_windows:
                 autostart.set_enabled(ui.start_with_windows)
         except OSError as e:
-            self.tray.showMessage(f"التشغيل مع {os_name()}", str(e), QSystemTrayIcon.MessageIcon.Warning)
+            self.tray.showMessage(t("التشغيل مع {os}", os=os_name()), str(e), QSystemTrayIcon.MessageIcon.Warning)
 
     def _rebuild_menu(self) -> None:
         self.menu.clear()
         default = self.ctx.settings.default_lock()
         if default:
-            act = self.menu.addAction(f"🔓 فتح {default.name}")
+            act = self.menu.addAction(t("🔓 فتح {name}", name=default.name))
             act.triggered.connect(self.window.open_default)
         others = [l for l in self.ctx.settings.locks if not default or l.device_id != default.device_id]
         if others:
-            sub = self.menu.addMenu("فتح قفل آخر")
+            sub = self.menu.addMenu(t("فتح قفل آخر"))
             for lock in others:
                 action = QAction(lock.name, sub)
                 action.triggered.connect(lambda _=False, d=lock.device_id: self.open_lock(d))
                 sub.addAction(action)
         self.menu.addSeparator()
-        self.menu.addAction("إظهار النافذة").triggered.connect(self.show_window)
-        self.menu.addAction("السجل").triggered.connect(self.open_history)
-        self.menu.addAction("الإعدادات").triggered.connect(self.open_settings)
+        self.menu.addAction(t("إظهار النافذة")).triggered.connect(self.show_window)
+        self.menu.addAction(t("السجل")).triggered.connect(self.open_history)
+        self.menu.addAction(t("الإعدادات")).triggered.connect(self.open_settings)
         self.menu.addSeparator()
-        self.menu.addAction("خروج").triggered.connect(self.quit)
+        self.menu.addAction(t("خروج")).triggered.connect(self.quit)
 
     # ----- الأوامر -----
 
@@ -109,6 +110,22 @@ class AppController(QObject):
         if SettingsDialog(self.ctx, self.window).exec() == QDialog.DialogCode.Accepted:
             self.window.reload_locks()
             self.apply_runtime_settings()
+            if self.ctx.settings.ui.language != language():
+                self._offer_restart_for_language()
+
+    def _offer_restart_for_language(self) -> None:
+        # السؤال باللغة الجديدة التي اختارها المستخدم
+        set_language(self.ctx.settings.ui.language)
+        answer = QMessageBox.question(
+            self.window, "LockControl", t("يُطبَّق تغيير اللغة بعد إعادة تشغيل البرنامج. إعادة التشغيل الآن؟")
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            self.restart()
+
+    def restart(self) -> None:
+        args = [a for a in autostart.launch_args() if a != "--minimized"] + ["--restarted"]
+        if QProcess.startDetached(args[0], args[1:]):
+            self.quit()
 
     def open_history(self) -> None:
         if daily_gate(self.ctx, self.window):
@@ -139,7 +156,7 @@ class AppController(QObject):
         if self.window.isVisible():
             return
         icon = QSystemTrayIcon.MessageIcon.Information if ok else QSystemTrayIcon.MessageIcon.Warning
-        self.tray.showMessage("التحكم بالأقفال", self.window.message.text(), icon, 4000)
+        self.tray.showMessage(t("التحكم بالأقفال"), self.window.message.text(), icon, 4000)
 
     def _cleanup(self) -> None:
         self.events.detach()

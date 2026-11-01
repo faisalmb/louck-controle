@@ -1,8 +1,9 @@
-"""تحويل الأخطاء إلى رسائل عربية مفهومة."""
+"""تحويل الأخطاء إلى رسائل مفهومة (بلغة الواجهة)."""
 
 from ..app_context import NotConfigured
 from ..core.errors import TuyaError, TuyaNetworkError
 from ..core.lock_service import LockOpenError
+from ..i18n import t
 
 TUYA_MESSAGES: dict[int, str] = {
     1001: "Client Secret غير صحيح.",
@@ -41,8 +42,9 @@ def describe_tuya_error(error: TuyaError) -> str | None:
     text = error.msg.lower()
     for needles, message in TEXT_PATTERNS:
         if any(n in text for n in needles):
-            return message
-    return TUYA_MESSAGES.get(error.code)
+            return t(message)
+    known = TUYA_MESSAGES.get(error.code)
+    return t(known) if known else None
 
 
 def describe_error(error: Exception) -> str:
@@ -50,13 +52,13 @@ def describe_error(error: Exception) -> str:
     if from_open:
         error = error.primary
     if isinstance(error, NotConfigured):
-        return "أكمل إعدادات الربط بتويا أولاً."
+        return t("أكمل إعدادات الربط بتويا أولاً.")
     if isinstance(error, TuyaNetworkError):
-        return "تعذر الاتصال بخادم تويا. تحقق من الإنترنت."
+        return t("تعذر الاتصال بخادم تويا. تحقق من الإنترنت.")
     if isinstance(error, TuyaError):
         known = describe_tuya_error(error)
         if known:
             return known
-        generic = f"رفض خادم تويا الطلب ({error.code}): {error.msg}"
-        return f"{generic}\n{OPEN_HINT}" if from_open else generic
-    return f"خطأ غير متوقع: {error}"
+        generic = t("رفض خادم تويا الطلب ({code}): {msg}", code=error.code, msg=error.msg)
+        return f"{generic}\n{t(OPEN_HINT)}" if from_open else generic
+    return t("خطأ غير متوقع: {error}", error=error)

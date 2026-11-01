@@ -7,6 +7,7 @@ from typing import Any, Callable, Mapping
 
 import httpx
 
+from ..i18n import t
 from . import signing
 from .errors import TOKEN_ERROR_CODES, TuyaError, TuyaNetworkError
 from .token_manager import Token, TokenManager, TokenStore
@@ -43,7 +44,7 @@ class TuyaCredentials:
         try:
             return REGIONS[self.region]
         except KeyError:
-            raise ValueError(f"منطقة غير معروفة: {self.region}") from None
+            raise ValueError(t("منطقة غير معروفة: {region}", region=self.region)) from None
 
 
 class TuyaClient:
@@ -111,12 +112,12 @@ class TuyaClient:
     ) -> Any:
         url = signing.canonical_url(path, params)
         content = signing.encode_body(body)
-        t = str(int(self._clock() * 1000))
+        timestamp = str(int(self._clock() * 1000))
         nonce = self._nonce()
         sign = signing.sign(
             self._creds.client_id,
             self._creds.client_secret,
-            t,
+            timestamp,
             nonce,
             signing.string_to_sign(method, url, content),
             access_token,
@@ -125,7 +126,7 @@ class TuyaClient:
             "client_id": self._creds.client_id,
             "sign": sign,
             "sign_method": "HMAC-SHA256",
-            "t": t,
+            "t": timestamp,
             "nonce": nonce,
         }
         if access_token:

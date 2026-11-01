@@ -174,3 +174,92 @@ def test_history_dialog_shows_newest_first(qtbot, ctx):  # noqa: F811
     assert d.table.rowCount() == 2
     assert d.table.item(0, 1).text() == "المكتب"
     assert d.table.item(0, 2).text() == "✗ فشل"
+
+
+# ----- اللغة -----
+
+
+@pytest.fixture
+def english():
+    from lockcontrol import i18n
+
+    i18n.set_language("en")
+    yield
+    i18n.set_language("ar")
+
+
+def test_main_window_in_english(qtbot, ctx, english):  # noqa: F811
+    from lockcontrol.ui.main_window import MainWindow
+
+    w = MainWindow(ctx, authorize_fn=lambda c, p: True)
+    qtbot.addWidget(w)
+    assert w.open_button.text() == "Unlock"
+    assert w.settings_button.text() == "⚙ Settings"
+    with qtbot.waitSignal(w.open_finished, timeout=3000):
+        w.open_selected()
+    assert w.message.text() == "✓ Unlocked المكتب"
+
+
+def test_language_choice_is_saved(qtbot, ctx):  # noqa: F811
+    from lockcontrol.core.storage import SettingsStore
+    from lockcontrol.ui.settings_dialog import SettingsDialog
+
+    d = SettingsDialog(ctx)
+    qtbot.addWidget(d)
+    d.language.setCurrentIndex(d.language.findData("en"))
+    d.save()
+    assert SettingsStore(ctx.store.data_dir).load().ui.language == "en"
+
+
+def test_changing_language_offers_restart(controller, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+
+    from lockcontrol import i18n
+
+    asked, restarted = [], []
+    monkeypatch.setattr(
+        QMessageBox, "question", lambda *a, **k: asked.append(a[2]) or QMessageBox.StandardButton.Yes
+    )
+    monkeypatch.setattr(controller, "restart", lambda: restarted.append(True))
+    try:
+        controller.ctx.settings.ui.language = "en"
+        controller._offer_restart_for_language()
+        assert asked == ["The new language applies after restarting the app. Restart now?"]
+        assert restarted == [True]
+    finally:
+        i18n.set_language("ar")
+
+
+def test_restart_launches_new_instance_then_quits(controller, monkeypatch):
+    started = []
+    monkeypatch.setattr(
+        controller_module.QProcess, "startDetached", lambda program, args: started.append([program, *args]) or True
+    )
+    quit_called = []
+    monkeypatch.setattr(controller, "quit", lambda: quit_called.append(True))
+    controller.restart()
+    assert started[0][-1] == "--restarted" and "--minimized" not in started[0]
+    assert quit_called == [True]
+
+
+@windows_only
+def test_autostart_creates_missing_run_key(monkeypatch):
+    """ملف مستخدم جديد بلا مفتاح Run (هكذا فشل CI)."""
+    import winreg
+
+    test_key = rf"Software\LockControlTest-{uuid.uuid4().hex[:8]}\Run"
+    monkeypatch.setattr(autostart, "RUN_KEY", test_key)
+    try:
+        autostart.set_enabled(False, "X")  # المفتاح غير موجود: لا خطأ
+        assert not autostart.is_enabled("X")
+        autostart.set_enabled(True, "X", command=r'"C:\x.exe" --minimized')
+        assert autostart.is_enabled("X")
+        autostart.set_enabled(False, "X")
+        assert not autostart.is_enabled("X")
+    finally:
+        parent = test_key.rsplit("\\", 1)[0]
+        for key in (test_key, parent):
+            try:
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key)
+            except FileNotFoundError:
+                pass

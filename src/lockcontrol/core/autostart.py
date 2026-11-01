@@ -51,14 +51,16 @@ def _win_is_enabled(value_name: str) -> bool:
 def _win_set_enabled(enabled: bool, value_name: str, command: str | None) -> None:
     import winreg
 
-    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
-        if enabled:
+    if enabled:
+        # مفتاح Run قد لا يوجد في ملف مستخدم جديد (كخوادم CI)، فننشئه.
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, value_name, 0, winreg.REG_SZ, command or launch_command())
-        else:
-            try:
-                winreg.DeleteValue(key, value_name)
-            except FileNotFoundError:
-                pass
+        return
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
+            winreg.DeleteValue(key, value_name)
+    except FileNotFoundError:
+        pass  # المفتاح أو القيمة غير موجودين أصلاً
 
 
 # ----- ماك ولينكس: ملفات -----

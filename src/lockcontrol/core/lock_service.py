@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from ..i18n import t
 from .errors import TuyaError
 from .storage import LockInfo
 from .tuya_client import TuyaClient
@@ -115,7 +116,7 @@ class LockService:
                 errors[method] = e
                 continue
             if result is False:
-                errors[method] = TuyaError(-1, "رفض القفل أمر الفتح")
+                errors[method] = TuyaError(-1, t("رفض القفل أمر الفتح"))
                 continue
             return method
         raise LockOpenError(errors)

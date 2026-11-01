@@ -12,6 +12,7 @@ from pathlib import Path
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
+from ..i18n import t
 from .storage import SecretStore, Settings
 
 FORMAT = "lockcontrol-backup"
@@ -31,7 +32,7 @@ def _key(password: str, salt: bytes, n: int = _N, r: int = _R, p: int = _P) -> b
 
 def export_backup(path: Path, password: str, settings: Settings, secrets: SecretStore) -> None:
     if len(password) < 6:
-        raise BackupError("كلمة مرور الملف يجب أن تكون 6 أحرف على الأقل.")
+        raise BackupError(t("كلمة مرور الملف يجب أن تكون 6 أحرف على الأقل."))
     payload = {
         "settings": settings.to_dict(),
         "secrets": {name: secrets.get(name) for name in EXPORTED_SECRETS if secrets.get(name)},
@@ -52,14 +53,14 @@ def import_backup(path: Path, password: str, secrets: SecretStore) -> Settings:
     try:
         document = json.loads(Path(path).read_text(encoding="utf-8"))
         if document.get("format") != FORMAT:
-            raise BackupError("الملف ليس نسخة احتياطية لهذا البرنامج.")
+            raise BackupError(t("الملف ليس نسخة احتياطية لهذا البرنامج."))
         kdf = document["kdf"]
         key = _key(password, base64.b64decode(kdf["salt"]), int(kdf["n"]), int(kdf["r"]), int(kdf["p"]))
         payload = json.loads(Fernet(key).decrypt(document["data"].encode()))
     except InvalidToken:
-        raise BackupError("كلمة المرور غير صحيحة أو الملف تالف.") from None
+        raise BackupError(t("كلمة المرور غير صحيحة أو الملف تالف.")) from None
     except (OSError, ValueError, KeyError, TypeError) as e:
-        raise BackupError(f"تعذر قراءة الملف: {e}") from None
+        raise BackupError(t("تعذر قراءة الملف: {e}", e=e)) from None
 
     for name, value in payload.get("secrets", {}).items():
         if name in EXPORTED_SECRETS and isinstance(value, str):

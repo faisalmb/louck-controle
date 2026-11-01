@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Callable
 
+from ..i18n import t
 from .storage import SecretStore
 from .verify import Verifier, VerifyOutcome
 
@@ -114,7 +115,7 @@ class SecurityManager:
     def set_pin(self, new_pin: str, current_pin: str | None = None) -> bool:
         """تعيين أول PIN، أو تغييره بإدخال الحالي. بعد نسيانه استخدم reset_pin."""
         if not validate_pin(new_pin):
-            raise ValueError(f"الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام")
+            raise ValueError(t("الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام", PIN_MIN=PIN_MIN, PIN_MAX=PIN_MAX))
         if self.has_pin():
             if current_pin is None or self.check_pin(current_pin).status is not PinStatus.OK:
                 return False
@@ -125,7 +126,7 @@ class SecurityManager:
     def reset_pin(self, new_pin: str, message: str, hwnd: int | None = None) -> VerifyOutcome:
         """نسيت الـ PIN: تحقق ويندوز جديد ثم PIN جديد."""
         if not validate_pin(new_pin):
-            raise ValueError(f"الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام")
+            raise ValueError(t("الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام", PIN_MIN=PIN_MIN, PIN_MAX=PIN_MAX))
         outcome = self.verify_os(message, hwnd)
         if outcome is VerifyOutcome.VERIFIED:
             self._secrets.set("pin_hash", hash_pin(new_pin))

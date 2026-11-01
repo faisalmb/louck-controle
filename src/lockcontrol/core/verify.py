@@ -9,6 +9,8 @@ import enum
 import sys
 from typing import Protocol
 
+from ..i18n import t
+
 
 class VerifyOutcome(enum.Enum):
     VERIFIED = "verified"
@@ -44,7 +46,7 @@ def default_verifier() -> Verifier:
 
 
 def os_name() -> str:
-    return {"win32": "ويندوز", "darwin": "ماك"}.get(sys.platform, "لينكس")
+    return {"win32": t("ويندوز"), "darwin": t("ماك")}.get(sys.platform, t("لينكس"))
 
 
 def os_auth_name() -> str:

@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 from ..app_context import AppContext
 from ..core.lock_service import LockStatus
 from ..core.storage import LockInfo
+from ..i18n import t
 from .auth import authorize
 from .messages import describe_error
 from .style import set_role
@@ -34,13 +35,13 @@ class MainWindow(QMainWindow):
         self.ctx = ctx
         self._authorize = authorize_fn
         self._busy = False
-        self.setWindowTitle("التحكم بالأقفال")
+        self.setWindowTitle(t("التحكم بالأقفال"))
         self.setMinimumSize(380, 520)
 
-        title = QLabel("التحكم بالأقفال")
+        title = QLabel(t("التحكم بالأقفال"))
         title.setObjectName("title")
-        self.settings_button = QPushButton("⚙ الإعدادات")
-        self.history_button = QPushButton("السجل")
+        self.settings_button = QPushButton(t("⚙ الإعدادات"))
+        self.history_button = QPushButton(t("السجل"))
         header = QHBoxLayout()
         header.addWidget(title)
         header.addStretch()
@@ -55,7 +56,7 @@ class MainWindow(QMainWindow):
         set_role(self.status_label, "muted")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.open_button = QPushButton("فتح")
+        self.open_button = QPushButton(t("فتح"))
         self.open_button.setObjectName("openButton")
         self.open_button.setFixedSize(180, 180)
         self.open_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -110,9 +111,9 @@ class MainWindow(QMainWindow):
         self.lock_combo.setVisible(has_locks)
         self.open_button.setEnabled(has_locks and not self._busy)
         if not self.ctx.is_configured():
-            self.status_label.setText("أكمل إعدادات الربط بتويا من ⚙ الإعدادات.")
+            self.status_label.setText(t("أكمل إعدادات الربط بتويا من ⚙ الإعدادات."))
         elif not has_locks:
-            self.status_label.setText("لا توجد أقفال. زامنها من ⚙ الإعدادات ← الأقفال.")
+            self.status_label.setText(t("لا توجد أقفال. زامنها من ⚙ الإعدادات ← الأقفال."))
         else:
             self.refresh_status()
 
@@ -124,18 +125,18 @@ class MainWindow(QMainWindow):
         lock = self.selected_lock()
         if not lock or not self.ctx.is_configured():
             return
-        self.status_label.setText("جارٍ قراءة الحالة...")
+        self.status_label.setText(t("جارٍ قراءة الحالة..."))
         device_id = lock.device_id
 
         def done(status: LockStatus):
             if self.lock_combo.currentData() != device_id:
                 return  # تغيّر الاختيار أثناء الطلب
-            parts = ["● متصل" if status.online else "○ غير متصل"]
+            parts = [t("● متصل") if status.online else t("○ غير متصل")]
             if status.battery is not None:
-                parts.append(f"البطارية {status.battery}%")
+                parts.append(t("البطارية {battery}%", battery=status.battery))
             elif status.battery_state:
-                state = BATTERY_STATES.get(status.battery_state, status.battery_state)
-                parts.append(f"البطارية: {state}")
+                state = t(BATTERY_STATES.get(status.battery_state, status.battery_state))
+                parts.append(t("البطارية: {state}", state=state))
             self.status_label.setText(" · ".join(parts))
 
         def failed(e: Exception):
@@ -157,19 +158,19 @@ class MainWindow(QMainWindow):
         if self._busy or lock is None:
             return
         if not self.ctx.is_configured():
-            self._show("أكمل إعدادات الربط بتويا أولاً.", ok=False)
+            self._show(t("أكمل إعدادات الربط بتويا أولاً."), ok=False)
             return
         if not self._authorize(self.ctx, self):
             return
 
         self._set_busy(True)
-        self._show(f"جارٍ فتح {lock.name}...", ok=None)
+        self._show(t("جارٍ فتح {name}...", name=lock.name), ok=None)
 
         def done(method: str):
             self.ctx.remember_open_method(lock.device_id, method)
             self.ctx.record(lock, True, method)
             self._set_busy(False)
-            self._show(f"✓ تم فتح {lock.name}", ok=True)
+            self._show(t("✓ تم فتح {name}", name=lock.name), ok=True)
             self.open_finished.emit(True)
 
         def failed(e: Exception):
@@ -186,7 +187,7 @@ class MainWindow(QMainWindow):
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
         self.open_button.setEnabled(not busy and bool(self.ctx.settings.locks))
-        self.open_button.setText("..." if busy else "فتح")
+        self.open_button.setText("..." if busy else t("فتح"))
 
     def _show(self, text: str, ok: bool | None) -> None:
         set_role(self.message, {True: "success", False: "error", None: "muted"}[ok])

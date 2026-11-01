@@ -19,10 +19,10 @@ From the [**Releases**](../../releases/latest) page:
 > The builds are not code-signed. **Windows:** if SmartScreen warns you, click *More info → Run anyway*. **macOS:** on first launch, right-click the app and choose *Open*.
 
 <p align="center">
-  <img src="docs/screenshots/main.png" width="300" alt="Main window">
+  <img src="docs/screenshots/en/main.png" width="300" alt="Main window">
 </p>
 
-> The user interface is in **Arabic** (right-to-left).
+> The interface is available in **English** and **Arabic** (right-to-left): *Settings → General → Language*.
 
 ## Features
 
@@ -36,6 +36,7 @@ From the [**Releases**](../../releases/latest) page:
 - **History log** of every unlock with its result.
 - **Clear error messages**: lock offline, Tuya subscription expired, wrong system clock, and more.
 - **Encrypted export/import** of your settings (password-protected file) to move to another computer.
+- **English or Arabic** interface, switchable in *Settings → General → Language*.
 - Follows the system **dark / light** theme.
 
 ## Security
@@ -97,12 +98,12 @@ This repository contains no keys or account data.
 5. Click **Unlock** 🔓
 
 <p align="center">
-  <img src="docs/screenshots/settings_tuya.png" width="380" alt="Tuya connection">
-  <img src="docs/screenshots/settings_locks.png" width="380" alt="Locks">
+  <img src="docs/screenshots/en/settings_tuya.png" width="380" alt="Tuya connection">
+  <img src="docs/screenshots/en/settings_locks.png" width="380" alt="Locks">
 </p>
 <p align="center">
-  <img src="docs/screenshots/settings_general.png" width="380" alt="General settings">
-  <img src="docs/screenshots/pin.png" width="300" alt="PIN entry">
+  <img src="docs/screenshots/en/settings_general.png" width="380" alt="General settings">
+  <img src="docs/screenshots/en/pin.png" width="300" alt="PIN entry">
 </p>
 
 ## Run from source

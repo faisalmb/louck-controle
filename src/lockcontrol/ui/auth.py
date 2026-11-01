@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 from ..app_context import AppContext
 from ..core.security import PIN_MAX, PIN_MIN, PinStatus, validate_pin
 from ..core.verify import VerifyOutcome, os_auth_name
+from ..i18n import t
 from .style import set_role
 from .worker import run_in_background
 
@@ -49,16 +50,16 @@ class AuthGateDialog(_ForegroundDialog):
     def __init__(self, ctx: AppContext, parent: QWidget | None = None):
         super().__init__(parent)
         self.ctx = ctx
-        self.setWindowTitle("التحقق من الهوية")
+        self.setWindowTitle(t("التحقق من الهوية"))
         self.setMinimumWidth(360)
 
-        self.info = QLabel(f"للمتابعة تحقق من هويتك عبر {os_auth_name()}.\nيُطلب هذا مرة واحدة يومياً.")
+        self.info = QLabel(t("للمتابعة تحقق من هويتك عبر {auth}.\nيُطلب هذا مرة واحدة يومياً.", auth=os_auth_name()))
         self.info.setWordWrap(True)
         self.status = QLabel("")
         self.status.setObjectName("muted")
-        self.retry = QPushButton("تحقق الآن")
+        self.retry = QPushButton(t("تحقق الآن"))
         self.retry.clicked.connect(self.start)
-        cancel = QPushButton("إلغاء")
+        cancel = QPushButton(t("إلغاء"))
         cancel.clicked.connect(self.reject)
 
         layout = QVBoxLayout(self)
@@ -71,10 +72,10 @@ class AuthGateDialog(_ForegroundDialog):
     def start(self):
         self.retry.setEnabled(False)
         set_role(self.status, "muted")
-        self.status.setText(f"بانتظار {os_auth_name()}...")
+        self.status.setText(t("بانتظار {auth}...", auth=os_auth_name()))
         hwnd = int(self.winId())
         run_in_background(
-            lambda: self.ctx.security.verify_os(VERIFY_MESSAGE, hwnd), self._done, self._error
+            lambda: self.ctx.security.verify_os(t(VERIFY_MESSAGE), hwnd), self._done, self._error
         )
 
     def _done(self, outcome: VerifyOutcome):
@@ -82,14 +83,14 @@ class AuthGateDialog(_ForegroundDialog):
             self.accept()
             return
         texts = {
-            VerifyOutcome.CANCELED: "أُلغي التحقق.",
-            VerifyOutcome.FAILED: "فشل التحقق.",
-            VerifyOutcome.UNAVAILABLE: f"التحقق عبر {os_auth_name()} غير متاح على هذا الجهاز.",
+            VerifyOutcome.CANCELED: t("أُلغي التحقق."),
+            VerifyOutcome.FAILED: t("فشل التحقق."),
+            VerifyOutcome.UNAVAILABLE: t("التحقق عبر {auth} غير متاح على هذا الجهاز.", auth=os_auth_name()),
         }
         self._show_error(texts[outcome])
 
     def _error(self, e: Exception):
-        self._show_error(f"تعذر التحقق: {e}")
+        self._show_error(t("تعذر التحقق: {e}", e=e))
 
     def _show_error(self, text: str):
         set_role(self.status, "error")
@@ -113,9 +114,9 @@ class PinDialog(_ForegroundDialog):
         self.mode = mode
         self.setMinimumWidth(320)
         titles = {
-            PinMode.ENTER: "أدخل الـ PIN",
-            PinMode.SETUP: "تعيين PIN للبرنامج",
-            PinMode.CHANGE: "تغيير الـ PIN",
+            PinMode.ENTER: t("أدخل الـ PIN"),
+            PinMode.SETUP: t("تعيين PIN للبرنامج"),
+            PinMode.CHANGE: t("تغيير الـ PIN"),
         }
         self.setWindowTitle(titles[mode])
 
@@ -127,19 +128,19 @@ class PinDialog(_ForegroundDialog):
 
         form = QFormLayout()
         if mode is PinMode.ENTER:
-            form.addRow("الـ PIN:", self.current)
+            form.addRow(t("الـ PIN:"), self.current)
         else:
             if mode is PinMode.CHANGE:
-                form.addRow("الـ PIN الحالي:", self.current)
-            form.addRow("الـ PIN الجديد:", self.new)
-            form.addRow("تأكيد الـ PIN:", self.confirm)
-            hint = QLabel(f"من {PIN_MIN} إلى {PIN_MAX} أرقام.")
+                form.addRow(t("الـ PIN الحالي:"), self.current)
+            form.addRow(t("الـ PIN الجديد:"), self.new)
+            form.addRow(t("تأكيد الـ PIN:"), self.confirm)
+            hint = QLabel(t("من {PIN_MIN} إلى {PIN_MAX} أرقام.", PIN_MIN=PIN_MIN, PIN_MAX=PIN_MAX))
             hint.setObjectName("muted")
             form.addRow(hint)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("موافق")
-        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("إلغاء")
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText(t("موافق"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(t("إلغاء"))
         buttons.accepted.connect(self.submit)
         buttons.rejected.connect(self.reject)
         self.ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
@@ -148,7 +149,7 @@ class PinDialog(_ForegroundDialog):
         layout.addLayout(form)
         layout.addWidget(self.message)
         if mode is PinMode.ENTER:
-            forgot = QPushButton("نسيت الـ PIN؟")
+            forgot = QPushButton(t("نسيت الـ PIN؟"))
             forgot.setFlat(True)
             forgot.clicked.connect(self.forgot)
             layout.addWidget(forgot)
@@ -169,16 +170,16 @@ class PinDialog(_ForegroundDialog):
             return
         new, confirm = self.new.text(), self.confirm.text()
         if not validate_pin(new):
-            self._error(f"الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام.")
+            self._error(t("الـ PIN يجب أن يكون من {PIN_MIN} إلى {PIN_MAX} أرقام.", PIN_MIN=PIN_MIN, PIN_MAX=PIN_MAX))
             return
         if new != confirm:
-            self._error("الرمزان غير متطابقين.")
+            self._error(t("الرمزان غير متطابقين."))
             return
         current = self.current.text() if self.mode is PinMode.CHANGE else None
         if self.ctx.security.set_pin(new, current):
             self.accept()
         else:
-            self._error("الـ PIN الحالي غير صحيح.")
+            self._error(t("الـ PIN الحالي غير صحيح."))
 
     def _submit_enter(self):
         result = self.ctx.security.check_pin(self.current.text())
@@ -186,7 +187,7 @@ class PinDialog(_ForegroundDialog):
         if result.status is PinStatus.OK:
             self.accept()
         elif result.status is PinStatus.WRONG:
-            self._error(f"رمز خاطئ. المحاولات المتبقية قبل الإيقاف: {result.remaining_attempts}")
+            self._error(t("رمز خاطئ. المحاولات المتبقية قبل الإيقاف: {remaining_attempts}", remaining_attempts=result.remaining_attempts))
         elif result.status is PinStatus.LOCKED:
             self._locked_seconds = result.locked_seconds
             self.ok_button.setEnabled(False)
@@ -196,7 +197,7 @@ class PinDialog(_ForegroundDialog):
         elif result.status is PinStatus.REVERIFY_REQUIRED:
             self.done(self.REVERIFY)
         elif result.status is PinStatus.NOT_SET:
-            self._error("لم يُعيَّن PIN بعد.")
+            self._error(t("لم يُعيَّن PIN بعد."))
 
     def _tick(self):
         if self._locked_seconds <= 0:
@@ -205,7 +206,7 @@ class PinDialog(_ForegroundDialog):
             self.current.setEnabled(True)
             self.message.setText("")
             return
-        self._error(f"محاولات خاطئة كثيرة. انتظر {self._locked_seconds} ثانية.")
+        self._error(t("محاولات خاطئة كثيرة. انتظر {_locked_seconds} ثانية.", _locked_seconds=self._locked_seconds))
         self._locked_seconds -= 1
 
     def forgot(self):
@@ -219,15 +220,15 @@ class PinResetDialog(_ForegroundDialog):
     def __init__(self, ctx: AppContext, parent: QWidget | None = None):
         super().__init__(parent)
         self.ctx = ctx
-        self.setWindowTitle("إعادة تعيين الـ PIN")
+        self.setWindowTitle(t("إعادة تعيين الـ PIN"))
         self.new = _pin_field()
         self.confirm = _pin_field()
-        self.message = QLabel(f"سيُطلب منك التحقق عبر {os_auth_name()} بعد إدخال الرمز الجديد.")
+        self.message = QLabel(t("سيُطلب منك التحقق عبر {auth} بعد إدخال الرمز الجديد.", auth=os_auth_name()))
         self.message.setWordWrap(True)
         form = QFormLayout()
-        form.addRow("الـ PIN الجديد:", self.new)
-        form.addRow("تأكيد الـ PIN:", self.confirm)
-        self.ok = QPushButton("تحقق وحفظ")
+        form.addRow(t("الـ PIN الجديد:"), self.new)
+        form.addRow(t("تأكيد الـ PIN:"), self.confirm)
+        self.ok = QPushButton(t("تحقق وحفظ"))
         self.ok.clicked.connect(self.submit)
         layout = QVBoxLayout(self)
         layout.addLayout(form)
@@ -237,23 +238,23 @@ class PinResetDialog(_ForegroundDialog):
     def submit(self):
         new = self.new.text()
         if not validate_pin(new) or new != self.confirm.text():
-            self.message.setText(f"أدخل رمزين متطابقين من {PIN_MIN} إلى {PIN_MAX} أرقام.")
+            self.message.setText(t("أدخل رمزين متطابقين من {PIN_MIN} إلى {PIN_MAX} أرقام.", PIN_MIN=PIN_MIN, PIN_MAX=PIN_MAX))
             return
         self.ok.setEnabled(False)
         hwnd = int(self.winId())
         run_in_background(
-            lambda: self.ctx.security.reset_pin(new, VERIFY_MESSAGE, hwnd), self._done, self._failed
+            lambda: self.ctx.security.reset_pin(new, t(VERIFY_MESSAGE), hwnd), self._done, self._failed
         )
 
     def _done(self, outcome: VerifyOutcome):
         if outcome is VerifyOutcome.VERIFIED:
             self.accept()
         else:
-            self.message.setText("لم يكتمل التحقق، لم يتغير الـ PIN.")
+            self.message.setText(t("لم يكتمل التحقق، لم يتغير الـ PIN."))
             self.ok.setEnabled(True)
 
     def _failed(self, e: Exception):
-        self.message.setText(f"تعذر التحقق: {e}")
+        self.message.setText(t("تعذر التحقق: {e}", e=e))
         self.ok.setEnabled(True)
 
 
