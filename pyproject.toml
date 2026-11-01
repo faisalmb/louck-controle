@@ -7,6 +7,8 @@ name = "lockcontrol"
 version = "0.1.0"
 description = "التحكم بأقفال تويا الذكية من ويندوز عبر Tuya Cloud"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "httpx>=0.27",
     "keyring>=25",
